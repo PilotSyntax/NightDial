@@ -19,7 +19,7 @@ for(let i=1;i<=12;i++){
 const store=()=>{try{localStorage.setItem('nightdial-v1',JSON.stringify(state))}catch{}};
 const notify=msg=>{$('notice').textContent=msg;$('notice').classList.add('visible');clearTimeout(notify.timeout);notify.timeout=setTimeout(()=>$('notice').classList.remove('visible'),4500)};
 function render(){
-  const analog=state.mode==='analog';document.body.classList.toggle('numeric-mode',!analog);$('dial').style.display=analog?'block':'none';$('digital').style.display=analog?'none':'block';
+  const analog=state.mode==='analog';document.body.classList.toggle('numeric-mode',!analog);$('dial').style.display=analog?'block':'none';$('digital').style.display=analog?'none':'flex';
   $('analog').classList.toggle('active',analog);$('numeric').classList.toggle('active',!analog);
   document.documentElement.style.setProperty('--color',palette[state.color]||palette.red);
   document.documentElement.style.setProperty('--bright',Math.max(.05,Number(state.bright)/100));
@@ -33,7 +33,11 @@ function clock(){
   $('hourHand').setAttribute('transform',`rotate(${h*30} 200 200)`);
   $('minuteHand').setAttribute('transform',`rotate(${m*6} 200 200)`);
   $('secondHand').setAttribute('transform',`rotate(${s*6} 200 200)`);
-  $('digital').textContent=d.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+  const updateFlip=(id,card,value)=>{const el=$(id);if(el.textContent!==value){el.textContent=value;const panel=$(card);panel.classList.remove('changed');void panel.offsetWidth;panel.classList.add('changed')}};
+  updateFlip('flipHours','hourCard',hh);
+  updateFlip('flipMinutes','minuteCard',mm);
+  $('digital').setAttribute('aria-label',hh+' heures '+mm);
   $('date').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
 }
 clock();setInterval(clock,1000);
