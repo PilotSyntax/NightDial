@@ -1,6 +1,16 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const palette={red:'#c8352f',amber:'#ce8127',green:'#2e9a60'};
+const palette={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
+const flipThemes={
+red:['#422326','#573134','#221416','#ffd7d4','#88464a','#b74c53'],
+amber:['#453020','#5b4028','#211710','#ffe1ab','#8b6746','#bb8545'],
+green:['#1c372d','#294a3a','#112019','#d1ffe7','#407b60','#44b780'],
+blue:['#1d2a48','#293b61','#101728','#d8e5ff','#46639d','#5283de'],
+violet:['#382544','#473152','#1c1524','#f0d9ff','#6c4b7c','#ad78df'],
+cyan:['#17373b','#245158','#102124','#d2fbff','#3b7b82','#40aeb9'],
+pink:['#452536','#60314b','#21131d','#ffe0ef','#965270','#dc689e'],
+white:['#33343c','#494a55','#1b1c22','#f2f2f7','#787a8a','#a5a7bb']
+};
 const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{}
 const state={...defaults,...saved};
@@ -19,9 +29,19 @@ for(let i=1;i<=12;i++){
 const store=()=>{try{localStorage.setItem('nightdial-v1',JSON.stringify(state))}catch{}};
 const notify=msg=>{$('notice').textContent=msg;$('notice').classList.add('visible');clearTimeout(notify.timeout);notify.timeout=setTimeout(()=>$('notice').classList.remove('visible'),4500)};
 function render(){
-  const analog=state.mode==='analog';document.body.classList.toggle('numeric-mode',!analog);$('dial').style.display=analog?'block':'none';$('digital').style.display=analog?'none':'flex';
-  $('analog').classList.toggle('active',analog);$('numeric').classList.toggle('active',!analog);
-  document.documentElement.style.setProperty('--color',palette[state.color]||palette.red);
+  const mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';
+  document.body.classList.toggle('numeric-mode',mode==='numeric');
+  document.body.classList.toggle('flip-mode',mode==='flip');
+  $('dial').style.display=mode==='analog'?'block':'none';
+  $('classicDigital').style.display=mode==='numeric'?'block':'none';
+  $('digital').style.display=mode==='flip'?'flex':'none';
+  $('analog').classList.toggle('active',mode==='analog');
+  $('numeric').classList.toggle('active',mode==='numeric');
+  $('flip').classList.toggle('active',mode==='flip');
+  const color=palette[state.color]?state.color:'red';
+  document.documentElement.style.setProperty('--color',palette[color]);
+  const flip=flipThemes[color];
+  ['--flip-top','--flip-mid','--flip-bottom','--flip-foreground','--flip-border','--flip-glow'].forEach((name,i)=>document.documentElement.style.setProperty(name,flip[i]));
   document.documentElement.style.setProperty('--bright',Math.max(.05,Number(state.bright)/100));
   document.documentElement.style.setProperty('--dim',Math.min(.95,Number(state.dim)/100));
   $('bright').value=state.bright;$('dim').value=state.dim;$('wake').checked=state.wake;$('seconds').checked=state.seconds;$('showWeather').checked=state.showWeather;$('weather').style.display=state.showWeather?'':'none';
@@ -37,6 +57,7 @@ function clock(){
   const updateFlip=(id,card,value)=>{const el=$(id);if(el.textContent!==value){el.textContent=value;const panel=$(card);panel.classList.remove('changed');void panel.offsetWidth;panel.classList.add('changed')}};
   updateFlip('flipHours','hourCard',hh);
   updateFlip('flipMinutes','minuteCard',mm);
+  $('classicDigital').textContent=hh+':'+mm;
   $('digital').setAttribute('aria-label',hh+' heures '+mm);
   $('date').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
 }
@@ -49,6 +70,7 @@ $('panel').addEventListener('pointerdown',()=>clearTimeout(panelTimer));
 $('panel').addEventListener('pointerup',()=>{clearTimeout(panelTimer);panelTimer=setTimeout(()=>showControls(false),16000)});
 $('analog').addEventListener('click',()=>{state.mode='analog';render()});
 $('numeric').addEventListener('click',()=>{state.mode='numeric';render()});
+$('flip').addEventListener('click',()=>{state.mode='flip';render()});
 document.querySelectorAll('.swatch').forEach(el=>el.addEventListener('click',()=>{state.color=el.dataset.color;render()}));
 ['bright','dim'].forEach(id=>$(id).addEventListener('input',e=>{state[id]=Number(e.target.value);render()}));
 $('seconds').addEventListener('change',e=>{state.seconds=e.target.checked;render()});
