@@ -9,9 +9,15 @@
   "description": "Horloge nocturne analogique et numérique",
   "icons": [
     {
-      "src": "icon.svg?v=11",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icon-512.png?v=12",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png?v=12",
+      "sizes": "180x180",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
