@@ -7,10 +7,10 @@
 #clockFace{display:flex;align-items:center;justify-content:center;filter:brightness(var(--bright));opacity:calc(1 - var(--dim));max-width:100%;max-height:100%;min-width:0;min-height:0}
 #dial{width:min(94vw,72dvh,640px);height:min(94vw,72dvh,640px);overflow:visible}
 #dial .outer{stroke:var(--color);stroke-width:1;opacity:.45;fill:none}#dial .ticks line{stroke:var(--color);stroke-width:1.2;opacity:.48}#dial .ticks line.major{stroke-width:2.5;opacity:.8}#dial .numbers text{fill:var(--color);font-size:24px;font-family:inherit;font-weight:200;text-anchor:middle;dominant-baseline:middle}#dial .hand{stroke:var(--color);stroke-linecap:round}#dial .hour{stroke-width:9}#dial .minute{stroke-width:5}#dial .second{stroke-width:1.5;opacity:.5}#dial .hub{fill:var(--color)}
-#digital{display:none;color:var(--color);font-size:min(29vw,170px);font-weight:100;line-height:1;letter-spacing:-.075em;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center}
+#digital{display:none;color:var(--color);font-size:min(27vw,170px);font-weight:700;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center}
 #info{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 16px;max-width:95vw;text-align:center}
-#date{font-size:clamp(12px,2.6vw,17px);font-weight:300;letter-spacing:.12em;color:var(--color);filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .65);text-transform:capitalize}
-#weather{border:0;background:transparent;color:var(--color);font:300 clamp(12px,2.6vw,17px) -apple-system,sans-serif;filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .75);padding:6px 4px;cursor:pointer}
+#date{font-size:clamp(18px,4.4vw,27px);font-weight:500;letter-spacing:.045em;color:var(--color);filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .65);text-transform:capitalize}
+#weather{border:0;background:transparent;color:var(--color);font:500 clamp(18px,4.4vw,27px) -apple-system,sans-serif;filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .75);padding:6px 4px;cursor:pointer}
 #top{position:fixed;z-index:3;top:calc(14px + env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font-size:11px;letter-spacing:.1em;opacity:.55}#top strong{color:var(--color);font-size:12px;letter-spacing:.2em}body.numeric-mode #top strong{display:none}
 #panel{position:fixed;z-index:4;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(94vw,460px);background:rgba(21,21,24,.97);border:1px solid #333;border-radius:19px;padding:16px 18px 12px;box-shadow:0 8px 35px #000b;transition:opacity .25s,visibility .25s}#panel.hidden,#top.hidden{opacity:0;visibility:hidden;pointer-events:none}
 button{border:0;color:#ddd;font-family:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #ddd;outline-offset:3px}.modes{display:flex;gap:7px}.modes button{background:#2b2b30;border-radius:11px;padding:11px 12px;font-size:13px;flex:1}.modes button.active{background:#5c2525;color:white}
@@ -20,8 +20,8 @@ button{border:0;color:#ddd;font-family:inherit;cursor:pointer}button:focus-visib
 body.numeric-mode #clockArea{gap:clamp(8px,2vh,16px)}body.numeric-mode #clockFace,body.numeric-mode #info{width:100%}
 @media(orientation:landscape){
 #clockArea{flex-direction:row;gap:clamp(8px,2vw,24px);padding:calc(9px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
-#dial{width:min(84dvh,66vw,640px);height:min(84dvh,66vw,640px)}#info{max-width:28vw;flex-direction:column}#date{max-width:28vw;font-size:clamp(10px,1.8vw,15px);letter-spacing:.06em}#weather{font-size:clamp(10px,1.9vw,15px)}
-body.numeric-mode #clockArea{flex-direction:column;gap:clamp(2px,2dvh,12px)}body.numeric-mode #digital{font-size:min(26vw,59dvh,230px)}body.numeric-mode #info{max-width:100%;flex-direction:row;gap:10px 20px}body.numeric-mode #date{max-width:none}
+#dial{width:min(84dvh,66vw,640px);height:min(84dvh,66vw,640px)}#info{max-width:28vw;flex-direction:column}#date{max-width:28vw;font-size:clamp(15px,2.6vw,23px);letter-spacing:.02em}#weather{font-size:clamp(15px,2.6vw,23px)}
+body.numeric-mode #clockArea{flex-direction:column;gap:clamp(2px,2dvh,12px)}body.numeric-mode #digital{font-size:min(25vw,59dvh,230px)}body.numeric-mode #info{max-width:100%;flex-direction:row;gap:10px 20px}body.numeric-mode #date{max-width:none}
 #panel{left:auto;right:calc(12px + env(safe-area-inset-right));transform:none;width:min(43vw,380px);bottom:calc(9px + env(safe-area-inset-bottom));padding:12px 14px 9px}#panel .settings{gap:7px;margin-top:10px;grid-template-columns:100px minmax(0,1fr)}#panel .footer{margin-top:8px}#panel .modes button{padding:7px}
 }
 </style></head>
