@@ -116,7 +116,7 @@ function showControls(show){$('panel').classList.toggle('hidden',!show);$('top')
 // A real swipe must not be mistaken for the tap that opens settings.
 const clockModes=['analog','numeric','flip'];
 let gestureStart=null;
-let suppressClockTap=false;
+let suppressClockTapUntil=0;
 function switchClockMode(direction){
   const currentIndex=Math.max(0,clockModes.indexOf(state.mode));
   state.mode=clockModes[(currentIndex+direction+clockModes.length)%clockModes.length];
@@ -137,13 +137,13 @@ $('clockArea').addEventListener('touchend',event=>{
   const dy=touch.clientY-start.y;
   if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.35)return;
   // iOS dispatches a synthetic click after touchend; suppress that click only.
-  suppressClockTap=true;
+  suppressClockTapUntil=Date.now()+650;
   switchClockMode(dx<0?1:-1);
 },{passive:true});
 $('clockArea').addEventListener('touchcancel',()=>{gestureStart=null},{passive:true});
 $('clockArea').addEventListener('click',event=>{
-  if(suppressClockTap){
-    suppressClockTap=false;
+  if(Date.now()<suppressClockTapUntil){
+    suppressClockTapUntil=0;
     event.preventDefault();
     event.stopImmediatePropagation();
     return;
