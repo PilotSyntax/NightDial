@@ -48,15 +48,63 @@ function render(){
   $('secondHand').style.display=state.seconds?'':'none';
   document.querySelectorAll('.swatch').forEach(el=>el.classList.toggle('active',el.dataset.color===state.color));store();
 }
+
+const segmentMap={
+'0':[0,1,2,3,4,5],'1':[1,2],'2':[0,1,6,4,3],
+'3':[0,1,6,2,3],'4':[5,6,1,2],'5':[0,5,6,2,3],
+'6':[0,5,6,4,2,3],'7':[0,1,2],'8':[0,1,2,3,4,5,6],
+'9':[0,1,2,3,5,6]
+};
+const polygons=[
+'25,9 126,9 139,22 123,36 28,36 12,23',
+'139,28 151,41 151,126 136,143 123,126 123,44',
+'139,151 151,168 151,247 139,262 123,247 123,169',
+'28,258 123,258 139,273 125,285 24,285 12,273',
+'12,151 28,169 28,247 12,262 0,247 0,169',
+'12,28 28,44 28,126 12,143 0,126 0,42',
+'27,137 124,137 137,150 123,164 28,164 13,150'
+];
+const alarmGroup=$('segmentDigits');
+const segmentElements=[];
+for(let digitIndex=0;digitIndex<4;digitIndex++){
+  const x=[7,204,462,659][digitIndex];
+  const group=document.createElementNS(svgNS,'g');
+  group.setAttribute('transform','translate('+x+',0) scale(.91,1)');
+  const parts=[];
+  for(let i=0;i<7;i++){
+    const polygon=document.createElementNS(svgNS,'polygon');
+    polygon.setAttribute('points',polygons[i]);
+    polygon.setAttribute('class','off');
+    group.append(polygon);
+    parts.push(polygon);
+  }
+  alarmGroup.append(group);
+  segmentElements.push(parts);
+}
+for(const y of [95,203]){
+  const dot=document.createElementNS(svgNS,'circle');
+  dot.setAttribute('cx','419');dot.setAttribute('cy',String(y));
+  dot.setAttribute('r','13');dot.setAttribute('class','lit');
+  alarmGroup.append(dot);
+}
+let lastAlarmText='';
+function renderAlarmDigits(value){
+  if(value===lastAlarmText)return;
+  lastAlarmText=value;
+  for(let digit=0;digit<4;digit++){
+    const on=segmentMap[value[digit]]||[];
+    for(let seg=0;seg<7;seg++)segmentElements[digit][seg].setAttribute('class',on.includes(seg)?'lit':'off');
+  }
+}
+
 function clock(){
   const d=new Date(),s=d.getSeconds()+d.getMilliseconds()/1000,m=d.getMinutes()+s/60,h=d.getHours()%12+m/60;
   $('hourHand').setAttribute('transform',`rotate(${h*30} 200 200)`);
   $('minuteHand').setAttribute('transform',`rotate(${m*6} 200 200)`);
   $('secondHand').setAttribute('transform',`rotate(${s*6} 200 200)`);
   const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
-  const updateFlip=(id,card,value)=>{const el=$(id);if(el.textContent!==value){el.textContent=value;const panel=$(card);panel.classList.remove('changed');void panel.offsetWidth;panel.classList.add('changed')}};
-  updateFlip('flipHours','hourCard',hh);
-  updateFlip('flipMinutes','minuteCard',mm);
+  renderAlarmDigits(hh+mm);
+  $('alarmMeridiem').textContent=d.getHours()<12?'AM':'PM';
   $('classicDigital').textContent=hh+':'+mm;
   $('digital').setAttribute('aria-label',hh+' heures '+mm);
   $('date').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
@@ -77,7 +125,17 @@ $('seconds').addEventListener('change',e=>{state.seconds=e.target.checked;render
 $('showWeather').addEventListener('change',e=>{state.showWeather=e.target.checked;render();if(state.showWeather)updateWeather(true)});
 let weatherLast=0,weatherBusy=false;
 const weatherButton=$('weather');
-const weatherIcons=code=>code===0?'☀':code<=3?'☁':code===45||code===48?'≋':code>=51&&code<=67?'☂':code>=71&&code<=86?'❄':code>=95?'⚡':'☁';
+const weatherIcons=(code,isDay)=>{
+  if(code===0)return isDay?'☀':'☾';
+  if(code===1)return isDay?'🌤':'☾';
+  if(code===2)return isDay?'⛅':'☁';
+  if(code===3)return '☁';
+  if(code===45||code===48)return '≋';
+  if(code>=51&&code<=67)return '☂';
+  if(code>=71&&code<=86)return '❄';
+  if(code>=95)return '⚡';
+  return '☁';
+};
 const locationPosition=()=>new Promise((resolve,reject)=>{
   if(!navigator.geolocation){reject(new Error('Localisation indisponible'));return}
   navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:600000});
@@ -89,12 +147,12 @@ async function updateWeather(force=false){
   try{
     const pos=await locationPosition();
     const lat=pos.coords.latitude,lon=pos.coords.longitude;
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code&temperature_unit=celsius&timezone=auto`;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,weather_code,is_day&temperature_unit=celsius&timezone=auto`;
     const response=await fetch(url,{cache:'no-store'});
     if(!response.ok)throw new Error('Météo indisponible');
     const data=await response.json(),temp=data.current?.temperature_2m,code=data.current?.weather_code;
     if(typeof temp!=='number')throw new Error('Température indisponible');
-    weatherButton.textContent=`${weatherIcons(code)} ${Math.round(temp)}°C`;
+    weatherButton.textContent=`${weatherIcons(code,data.current?.is_day===1)} ${Math.round(temp)}°C`;
     weatherButton.title='Température extérieure actuelle (Open-Meteo) • toucher pour actualiser';
     weatherLast=Date.now();
   }catch(error){
