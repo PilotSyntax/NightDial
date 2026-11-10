@@ -112,7 +112,44 @@ function clock(){
 clock();setInterval(clock,1000);
 let panelTimer;
 function showControls(show){$('panel').classList.toggle('hidden',!show);$('top').classList.toggle('hidden',!show);clearTimeout(panelTimer);if(show)panelTimer=setTimeout(()=>showControls(false),16000)}
-$('clockArea').addEventListener('click',()=>showControls($('panel').classList.contains('hidden')));
+// Horizontal swipe navigation: analog → numeric → flip → analog.
+// A real swipe must not be mistaken for the tap that opens settings.
+const clockModes=['analog','numeric','flip'];
+let gestureStart=null;
+let suppressClockTap=false;
+function switchClockMode(direction){
+  const currentIndex=Math.max(0,clockModes.indexOf(state.mode));
+  state.mode=clockModes[(currentIndex+direction+clockModes.length)%clockModes.length];
+  render(); // render() also persists the selected mode
+  showControls(false);
+}
+$('clockArea').addEventListener('touchstart',event=>{
+  if(event.touches.length!==1||event.target.closest('button')){gestureStart=null;return}
+  const touch=event.touches[0];
+  gestureStart={x:touch.clientX,y:touch.clientY,id:touch.identifier};
+},{passive:true});
+$('clockArea').addEventListener('touchend',event=>{
+  if(!gestureStart)return;
+  const start=gestureStart;gestureStart=null;
+  const touch=Array.from(event.changedTouches).find(t=>t.identifier===start.id);
+  if(!touch)return;
+  const dx=touch.clientX-start.x;
+  const dy=touch.clientY-start.y;
+  if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.35)return;
+  // iOS dispatches a synthetic click after touchend; suppress that click only.
+  suppressClockTap=true;
+  switchClockMode(dx<0?1:-1);
+},{passive:true});
+$('clockArea').addEventListener('touchcancel',()=>{gestureStart=null},{passive:true});
+$('clockArea').addEventListener('click',event=>{
+  if(suppressClockTap){
+    suppressClockTap=false;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    return;
+  }
+  showControls($('panel').classList.contains('hidden'));
+});
 $('hide').addEventListener('click',()=>showControls(false));
 $('panel').addEventListener('pointerdown',()=>clearTimeout(panelTimer));
 $('panel').addEventListener('pointerup',()=>{clearTimeout(panelTimer);panelTimer=setTimeout(()=>showControls(false),16000)});
