@@ -1,0 +1,18 @@
+{
+  "name": "NightDial — Horloge de nuit",
+  "short_name": "NightDial",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "description": "Horloge nocturne analogique et numérique",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
