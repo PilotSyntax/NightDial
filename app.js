@@ -313,7 +313,7 @@ applyCity(cityLabel);
 async function resolveCity(lat,lon){
   const near=cityCache&&Math.abs(cityCache.lat-lat)<.04&&Math.abs(cityCache.lon-lon)<.04;
   if(near&&Date.now()-cityCache.at<86400000){applyCity(cityCache.name);return}
-  if(Date.now()-cityLastAttempt<3600000)return;
+  if(cityLastAttempt && Date.now()-cityLastAttempt<3600000)return;
   cityLastAttempt=Date.now();
   try{
     const query='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+
