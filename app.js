@@ -72,6 +72,7 @@ let nightActive=false;
 let lastShiftStep=-1;
 let lastAdaptiveMinute=-1;
 let sunriseIntensity=0;
+let sunrisePreviewUntil=0;
 function updateAdaptiveDisplay(now=new Date()){
   const minute=now.getHours()*60+now.getMinutes();
   const start=minuteOfDay(state.nightStart),end=minuteOfDay(state.nightEnd);
@@ -95,6 +96,10 @@ function updateAdaptiveDisplay(now=new Date()){
       // Smoothly lessen visual attenuation; never modify system brightness.
       dim=dim*(1-sunriseIntensity)+Math.min(savedDim,.12)*sunriseIntensity;
     }
+  }
+  if(Date.now()<sunrisePreviewUntil){
+    sunriseIntensity=1;
+    dim=Math.min(savedDim,.12);
   }
   document.documentElement.style.setProperty('--bright',clamp(Number(state.bright)/100,.05,1).toFixed(3));
   document.documentElement.style.setProperty('--dim',clamp(dim,0,.95).toFixed(3));
@@ -253,6 +258,11 @@ for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration']){
   $(id).addEventListener('change',e=>{state[id]=id==='sunriseDuration'?Number(e.target.value):e.target.value;render()});
 }
 $('nightDim').addEventListener('input',e=>{state.nightDim=Number(e.target.value);render()});
+$('sunrisePreview').addEventListener('click',()=>{
+  sunrisePreviewUntil=Date.now()+8000;
+  updateAdaptiveDisplay();
+  setTimeout(()=>updateAdaptiveDisplay(),8100);
+});
 $('showWeather').addEventListener('change',e=>{state.showWeather=e.target.checked;render();if(state.showWeather)updateWeather(true)});
 let weatherLast=0,weatherBusy=false;
 const weatherButton=$('weather');
