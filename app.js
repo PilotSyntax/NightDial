@@ -11,7 +11,7 @@ cyan:['#17373b','#245158','#102124','#d2fbff','#3b7b82','#40aeb9'],
 pink:['#452536','#60314b','#21131d','#ffe0ef','#965270','#dc689e'],
 white:['#33343c','#494a55','#1b1c22','#f2f2f7','#787a8a','#a5a7bb']
 };
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{}
 const state={...defaults,...saved};
 const svgNS='http://www.w3.org/2000/svg';
@@ -42,11 +42,76 @@ function render(){
   document.documentElement.style.setProperty('--color',palette[color]);
   const flip=flipThemes[color];
   ['--flip-top','--flip-mid','--flip-bottom','--flip-foreground','--flip-border','--flip-glow'].forEach((name,i)=>document.documentElement.style.setProperty(name,flip[i]));
-  document.documentElement.style.setProperty('--bright',Math.max(.05,Number(state.bright)/100));
-  document.documentElement.style.setProperty('--dim',Math.min(.95,Number(state.dim)/100));
+  // Night and sunrise apply visual settings without overwriting saved daytime preferences.
+  updateAdaptiveDisplay();
   $('bright').value=state.bright;$('dim').value=state.dim;$('wake').checked=state.wake;$('seconds').checked=state.seconds;$('showWeather').checked=state.showWeather;$('weather').style.display=state.showWeather?'':'none';
   $('secondHand').style.display=state.seconds?'':'none';
-  document.querySelectorAll('.swatch').forEach(el=>el.classList.toggle('active',el.dataset.color===state.color));store();
+  for(const id of ['smartNight','nightMinimal','flipPro','oledShift','sunrise'])$(id).checked=Boolean(state[id]);
+  for(const id of ['nightStart','nightEnd','wakeTime'])$(id).value=state[id];
+  $('nightDim').value=state.nightDim;
+  $('sunriseDuration').value=String(state.sunriseDuration);
+  document.querySelectorAll('.swatch').forEach(el=>el.classList.toggle('active',el.dataset.color===state.color));
+  store();
+}
+
+
+/* v14: clock-local time schedules, CSS-only dimming, and infrequent pixel shifting.
+   No hardware screen brightness changes or background alarm guarantees. */
+const minuteOfDay=value=>{
+  const match=/^(\\d{2}):(\\d{2})$/.exec(value||'');
+  if(!match)return null;
+  const h=Number(match[1]),m=Number(match[2]);
+  return h<24&&m<60?h*60+m:null;
+};
+const isInSchedule=(minute,start,end)=>{
+  if(start===null||end===null||start===end)return false;
+  return start<end?minute>=start&&minute<end:minute>=start||minute<end;
+};
+const clamp=(number,min,max)=>Math.max(min,Math.min(max,number));
+let nightActive=false;
+let lastShiftStep=-1;
+let lastAdaptiveMinute=-1;
+let sunriseIntensity=0;
+function updateAdaptiveDisplay(now=new Date()){
+  const minute=now.getHours()*60+now.getMinutes();
+  const start=minuteOfDay(state.nightStart),end=minuteOfDay(state.nightEnd);
+  nightActive=Boolean(state.smartNight)&&isInSchedule(minute,start,end);
+  const savedDim=clamp(Number(state.dim)||0,0,95)/100;
+  const nightDim=clamp(Number(state.nightDim)||75,25,95)/100;
+  let dim=nightActive?Math.max(savedDim,nightDim):savedDim;
+  sunriseIntensity=0;
+  const wake=minuteOfDay(state.wakeTime);
+  const duration=clamp(Number(state.sunriseDuration)||30,15,60);
+  if(state.sunrise&&wake!==null){
+    const minutesBefore=(wake-minute+1440)%1440;
+    // Begin only inside the configured lead-up, and hold briefly after the target time.
+    const elapsed=(minute-wake+1440)%1440;
+    if(minutesBefore<=duration){
+      sunriseIntensity=1-minutesBefore/duration;
+    }else if(elapsed<=10){
+      sunriseIntensity=1;
+    }
+    if(sunriseIntensity>0){
+      // Smoothly lessen visual attenuation; never modify system brightness.
+      dim=dim*(1-sunriseIntensity)+Math.min(savedDim,.12)*sunriseIntensity;
+    }
+  }
+  document.documentElement.style.setProperty('--bright',clamp(Number(state.bright)/100,.05,1).toFixed(3));
+  document.documentElement.style.setProperty('--dim',clamp(dim,0,.95).toFixed(3));
+  document.documentElement.style.setProperty('--sunrise-strength',(sunriseIntensity*.85).toFixed(3));
+  const minimal=nightActive&&Boolean(state.nightMinimal)&&$('panel').classList.contains('hidden')&&sunriseIntensity===0;
+  document.body.classList.toggle('night-minimal',minimal);
+  const status=nightActive?'Nuit active':'Mode jour';
+  $('nightStatus').textContent=status+(sunriseIntensity>0?' • lever de soleil visuel '+Math.round(sunriseIntensity*100)+' %':'')+'. NightDial doit rester visible pour fonctionner.';
+  const shiftStep=state.oledShift&&document.visibilityState==='visible'?Math.floor(now.getTime()/120000):-1;
+  if(shiftStep!==lastShiftStep){
+    lastShiftStep=shiftStep;
+    const positions=[[0,0],[2,-2],[-2,1],[1,2],[-1,-2],[-2,-1],[2,1]];
+    const [x,y]=shiftStep<0?[0,0]:positions[shiftStep%positions.length];
+    document.documentElement.style.setProperty('--oled-x',x+'px');
+    document.documentElement.style.setProperty('--oled-y',y+'px');
+  }
+  lastAdaptiveMinute=minute;
 }
 
 const segmentMap={
@@ -90,10 +155,17 @@ for(const y of [95,203]){
 let lastAlarmText='';
 function renderAlarmDigits(value){
   if(value===lastAlarmText)return;
+  const animate=lastAlarmText!==''&&state.mode==='flip'&&state.flipPro&&document.visibilityState==='visible'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   lastAlarmText=value;
   for(let digit=0;digit<4;digit++){
     const on=segmentMap[value[digit]]||[];
     for(let seg=0;seg<7;seg++)segmentElements[digit][seg].setAttribute('class',on.includes(seg)?'lit':'off');
+  }
+  if(animate){
+    const face=$('alarmSvg');
+    face.classList.remove('minute-flip');
+    void face.offsetWidth;
+    face.classList.add('minute-flip');
   }
 }
 
@@ -108,10 +180,20 @@ function clock(){
   $('classicDigital').textContent=hh+':'+mm;
   $('digital').setAttribute('aria-label',hh+' heures '+mm);
   $('date').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  // One adaptive refresh per minute is enough for night schedule and sunrise.
+  if(lastAdaptiveMinute!==d.getHours()*60+d.getMinutes())updateAdaptiveDisplay(d);
 }
-clock();setInterval(clock,1000);
+let clockInterval;
+function startClockTimer(){
+  clearInterval(clockInterval);
+  clock();
+  // Seconds need 1 Hz, otherwise 15-second refresh reduces unnecessary DOM work.
+  clockInterval=setInterval(clock,state.seconds?1000:15000);
+}
+startClockTimer();
+setInterval(()=>{if(document.visibilityState==='visible')updateAdaptiveDisplay()},60000);
 let panelTimer;
-function showControls(show){$('panel').classList.toggle('hidden',!show);$('top').classList.toggle('hidden',!show);clearTimeout(panelTimer);if(show)panelTimer=setTimeout(()=>showControls(false),16000)}
+function showControls(show){$('panel').classList.toggle('hidden',!show);$('top').classList.toggle('hidden',!show);clearTimeout(panelTimer);if(show)panelTimer=setTimeout(()=>showControls(false),16000);updateAdaptiveDisplay()}
 // Horizontal swipe navigation: analog → numeric → flip → analog.
 // A real swipe must not be mistaken for the tap that opens settings.
 const clockModes=['analog','numeric','flip'];
@@ -158,7 +240,14 @@ $('numeric').addEventListener('click',()=>{state.mode='numeric';render()});
 $('flip').addEventListener('click',()=>{state.mode='flip';render()});
 document.querySelectorAll('.swatch').forEach(el=>el.addEventListener('click',()=>{state.color=el.dataset.color;render()}));
 ['bright','dim'].forEach(id=>$(id).addEventListener('input',e=>{state[id]=Number(e.target.value);render()}));
-$('seconds').addEventListener('change',e=>{state.seconds=e.target.checked;render()});
+$('seconds').addEventListener('change',e=>{state.seconds=e.target.checked;render();startClockTimer()});
+for(const id of ['smartNight','nightMinimal','flipPro','oledShift','sunrise']){
+  $(id).addEventListener('change',e=>{state[id]=e.target.checked;render()});
+}
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration']){
+  $(id).addEventListener('change',e=>{state[id]=id==='sunriseDuration'?Number(e.target.value):e.target.value;render()});
+}
+$('nightDim').addEventListener('input',e=>{state.nightDim=Number(e.target.value);render()});
 $('showWeather').addEventListener('change',e=>{state.showWeather=e.target.checked;render();if(state.showWeather)updateWeather(true)});
 let weatherLast=0,weatherBusy=false;
 const weatherButton=$('weather');
@@ -216,7 +305,7 @@ async function acquireWake(){
   }catch(error){wakeStatus('Maintien écran : indisponible');notify('iOS ne permet pas actuellement de maintenir l’écran éveillé. Vérifier le mode économie d’énergie ou les réglages de verrouillage automatique.')}
 }
 $('wake').addEventListener('change',async e=>{state.wake=e.target.checked;render();if(state.wake)await acquireWake();else await releaseWake()});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')acquireWake()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){acquireWake();clock();updateAdaptiveDisplay()}else updateAdaptiveDisplay()});
 window.addEventListener('pageshow',()=>acquireWake());
 document.addEventListener('pointerdown',()=>{if(state.wake && !wakeLock)acquireWake()},{passive:true});
 render();acquireWake();showControls(true);
