@@ -34,3 +34,14 @@ Ouvrir les réglages de l'horloge puis **Options Nuit, Flip Pro et Réveil** :
 **Limites importantes :** il ne s'agit pas d'une alarme sonore fiable. L'application web doit rester au premier plan, avec l'écran éveillé. iOS peut interrompre le Wake Lock ; NightDial ne peut pas modifier la luminosité physique. Utiliser l'alarme native iOS pour les réveils importants.
 
 La v14 conserve le stockage local `nightdial-v1`, les modes analogique / numérique / Flip Clock, les huit couleurs, les réglages de météo, les gestes et l'icône PWA.
+
+
+## v15 — split-flap de gare et ville météo
+
+Le mode **Flip Clock** utilise désormais quatre cellules mécaniques indépendantes (heures et minutes) avec deux volets par cellule : volet supérieur qui bascule, puis volet inférieur qui se referme. Seuls les chiffres qui changent sont animés à la minute. L'option **Animation Flip gare** active ou désactive le mouvement. Utilisez **Tester les volets de gare** dans les options avancées pour vérifier l'effet immédiatement, sans attendre une minute. L'option d'accessibilité « Réduire les animations » est respectée.
+
+La **ville** apparaît à côté de la température lorsque la géolocalisation est autorisée et qu'une ville a pu être identifiée. Le nom provient de l'API de géocodage inversé BigDataCloud (client navigateur, sans clé). Une position fraîche est envoyée depuis l'iPhone à ce service tiers ; le nom de ville est stocké localement jusqu'à 24 h afin de limiter les appels. Si le service ne répond pas, l'heure continue normalement et la ville peut être absente. La météo reste fournie par Open-Meteo. Pour forcer le rafraîchissement, toucher la température.
+
+Fonctions v14 conservées : horaires nocturnes, atténuation, micro-déplacement OLED, lever de soleil visuel et son aperçu, Wake Lock (selon iOS), swipe entre trois modes, huit couleurs et stockage local des préférences (`nightdial-v1`).
+
+**Attention :** les effets visuels n'empêchent pas le verrouillage imposé par iOS et ne remplacent pas une alarme native fiable.
