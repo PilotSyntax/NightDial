@@ -180,13 +180,15 @@ function flipTile(tile,value,delay=0){
     },670);
   },delay);
 }
-function renderStationDigits(value,{force=false}={}){
-  if(!/^\d{4}$/.test(value)||(!force&&value===lastStationValue))return;
+function renderStationDigits(value){
+  if(!/^\d{4}$/.test(value)||value===lastStationValue)return;
+  const firstPaint=lastStationValue==='';
   lastStationValue=value;
-  const animate=Boolean(state.flipPro)&&state.mode==='flip'&&document.visibilityState==='visible'&&!reducedMotion();
+  const animate=!firstPaint&&Boolean(state.flipPro)&&state.mode==='flip'&&
+    document.visibilityState==='visible'&&!reducedMotion();
   stationTiles.forEach((tile,i)=>{
     const next=value.charAt(i);
-    if(!animate||force&&tile.value==='0'&&lastStationValue==='0000')settleTile(tile,next);
+    if(!animate)settleTile(tile,next);
     else if(tile.value!==next)flipTile(tile,next,i*80);
   });
 }
@@ -341,7 +343,7 @@ const weatherIcons=(code,isDay)=>{
 };
 const locationPosition=()=>new Promise((resolve,reject)=>{
   if(!navigator.geolocation){reject(new Error('Localisation indisponible'));return}
-  navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:600000});
+  navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:12000,maximumAge:0});
 });
 async function updateWeather(force=false){
   if(!state.showWeather||weatherBusy||(!force && Date.now()-weatherLast<15*60*1000))return;
