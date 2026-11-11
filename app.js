@@ -58,7 +58,7 @@ function render(){
 /* v14: clock-local time schedules, CSS-only dimming, and infrequent pixel shifting.
    No hardware screen brightness changes or background alarm guarantees. */
 const minuteOfDay=value=>{
-  const match=/^(\\d{2}):(\\d{2})$/.exec(value||'');
+  const match=/^(\d{2}):(\d{2})$/.exec(value||'');
   if(!match)return null;
   const h=Number(match[1]),m=Number(match[2]);
   return h<24&&m<60?h*60+m:null;
