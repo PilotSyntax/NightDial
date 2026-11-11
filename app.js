@@ -183,12 +183,17 @@ function clock(){
   // One adaptive refresh per minute is enough for night schedule and sunrise.
   if(lastAdaptiveMinute!==d.getHours()*60+d.getMinutes())updateAdaptiveDisplay(d);
 }
-let clockInterval;
+let clockTimer;
+function scheduleClock(){
+  clearTimeout(clockTimer);
+  // Align updates with the next minute when the seconds hand is hidden.
+  const delay=state.seconds?1000:60000-Date.now()%60000+30;
+  clockTimer=setTimeout(()=>{clock();scheduleClock()},delay);
+}
 function startClockTimer(){
-  clearInterval(clockInterval);
+  clearTimeout(clockTimer);
   clock();
-  // Seconds need 1 Hz, otherwise 15-second refresh reduces unnecessary DOM work.
-  clockInterval=setInterval(clock,state.seconds?1000:15000);
+  scheduleClock();
 }
 startClockTimer();
 setInterval(()=>{if(document.visibilityState==='visible')updateAdaptiveDisplay()},60000);
