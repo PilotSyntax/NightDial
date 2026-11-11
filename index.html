@@ -83,19 +83,47 @@ body.flip-mode #alarmSvg.minute-flip{transform-origin:center center;animation:fl
 @media(prefers-reduced-motion:reduce){body.flip-mode #alarmSvg.minute-flip{animation:none}}
 @media(orientation:landscape){#panel{max-height:92dvh}.advanced .advanced-settings{gap:8px}}
 
+
+/* v15 — split-flap railway departure board: independent mechanical leaves. */
+body.flip-mode #clockFace{filter:brightness(var(--bright));opacity:calc(1 - var(--dim))}
+.station-board{width:min(94vw,1000px);padding:clamp(11px,2.5vw,24px);background:linear-gradient(145deg,#1c1e23,#090a0d 55%,#141519);border:2px solid #4b4c50;border-radius:clamp(12px,2.4vw,24px);box-shadow:0 10px 40px #000b,inset 0 2px 3px #ffffff20,0 0 16px var(--flip-glow);overflow:hidden}
+.station-heading{font:600 clamp(9px,1.9vw,15px) -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.22em;color:#9f9fa4;display:flex;justify-content:space-between;margin:0 3px clamp(9px,2vw,17px)}
+.station-heading span{color:#67696f;letter-spacing:.10em}
+.station-cells{display:flex;gap:clamp(4px,1.15vw,13px);justify-content:center;align-items:center;width:100%}
+.station-cell{--tile-font:clamp(52px,17vw,175px);position:relative;flex:1 1 0;min-width:0;max-width:205px;aspect-ratio:.70;perspective:700px;background:#101114;border:1px solid #49494c;border-radius:clamp(5px,1.3vw,12px);box-shadow:inset 0 3px 8px #0008,0 4px 12px #0007;overflow:hidden;isolation:isolate}
+.station-cell::after{content:"";position:absolute;z-index:8;left:0;right:0;top:calc(50% - 1px);height:2px;background:#060607;box-shadow:0 1px 1px #5556;pointer-events:none}
+.station-half,.station-flap{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:linear-gradient(165deg,#27282c,#18191c);color:var(--flip-foreground)}
+.station-half.top,.station-flap.front{top:0;transform-origin:bottom center;border-radius:inherit}
+.station-half.bottom,.station-flap.back{bottom:0;transform-origin:top center;background:linear-gradient(160deg,#151619,#222327)}
+.station-half .glyph,.station-flap .glyph{position:absolute;display:flex;align-items:center;justify-content:center;width:100%;height:200%;font:700 var(--tile-font)/1 Georgia,"Times New Roman",serif;font-variant-numeric:tabular-nums;letter-spacing:-.065em;text-shadow:0 2px 2px #0008}
+.station-half.top .glyph,.station-flap.front .glyph{top:0}
+.station-half.bottom .glyph,.station-flap.back .glyph{top:-100%}
+.station-flap{z-index:5;visibility:hidden;transform-style:preserve-3d}
+.station-flap.front{z-index:7}
+.station-flap.back{z-index:6;transform:rotateX(90deg)}
+.station-cell.flipping .station-flap{visibility:visible}
+.station-cell.flipping .station-flap.front{animation:railTop .29s cubic-bezier(.45,0,.85,.72) forwards}
+.station-cell.flipping .station-flap.back{animation:railBottom .32s cubic-bezier(.22,.55,.25,1) .29s forwards}
+@keyframes railTop{0%{transform:rotateX(0)}100%{transform:rotateX(-90deg)}}
+@keyframes railBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.station-colon{flex:0 0 clamp(12px,3.3vw,32px);align-self:center;color:var(--flip-foreground);font-size:clamp(48px,13vw,150px);font-weight:800;line-height:1;filter:drop-shadow(0 2px 3px #000)}
+.city-name{font:500 clamp(16px,3.5vw,25px) -apple-system,BlinkMacSystemFont,sans-serif;color:var(--color);filter:brightness(var(--bright));opacity:calc(1 - var(--dim));white-space:nowrap}
+body.flip-mode .city-name{color:var(--flip-foreground)}
+.preview-action{grid-column:1/-1;border:1px solid #64546a;background:#39303d;color:#f4edf7;border-radius:9px;padding:9px 12px;font-size:12px}
+@media(orientation:landscape){.station-board{width:min(83vw,1040px);padding:clamp(7px,1.5vh,15px)}.station-cell{--tile-font:clamp(60px,28dvh,180px);aspect-ratio:.91}.station-heading{margin-bottom:5px}.station-colon{font-size:min(27dvh,120px)}.city-name{font-size:clamp(15px,2.5vw,23px)}}
+@media(prefers-reduced-motion:reduce){.station-cell.flipping .station-flap.front,.station-cell.flipping .station-flap.back{animation:none}}
+
 </style></head>
 <body><div id="top"><strong>NIGHTDIAL</strong><span id="wakeStatus">Écran éveillé : vérification…</span></div>
 <div id="sunriseGlow" aria-hidden="true"></div>
 <main id="clockArea" aria-label="Horloge. Toucher pour afficher ou masquer les paramètres."><div id="clockFace">
 <svg id="dial" viewBox="0 0 400 400" role="img" aria-label="Horloge analogique"><circle class="outer" cx="200" cy="200" r="195"/><g class="ticks" id="ticks"></g><g class="numbers" id="numbers"></g><line id="hourHand" class="hand hour" x1="200" y1="213" x2="200" y2="114"/><line id="minuteHand" class="hand minute" x1="200" y1="219" x2="200" y2="65"/><line id="secondHand" class="hand second" x1="200" y1="235" x2="200" y2="52" style="display:none"/><circle class="hub" cx="200" cy="200" r="5"/></svg>
 <div id="classicDigital" role="timer" aria-live="off">00:00</div><div id="digital" role="timer" aria-live="off" aria-label="Heure">
-<div class="alarm-shell">
-  <div class="alarm-meta"><span id="alarmMeridiem">24H</span><span class="alarm-status" aria-hidden="true">Zzᶻ　♧</span></div><div class="hinge-shadow" aria-hidden="true"></div>
-  <svg id="alarmSvg" viewBox="0 0 840 300" role="img" aria-label="Chiffres à segments lumineux">
-    <g id="segmentDigits"></g>
-  </svg>
+<div class="station-board" id="stationBoard" aria-hidden="true">
+  <div class="station-heading">NIGHTDIAL <span>HORLOGE DE GARE</span></div>
+  <div class="station-cells" id="stationCells"></div>
 </div>
-</div></div><div id="info"><div id="date"></div><button id="weather" type="button" title="Actualiser la température" aria-label="Température locale">☁ --°C</button></div></main>
+</div></div><div id="info"><div id="date"></div><button id="weather" type="button" title="Actualiser la température" aria-label="Température locale">☁ --°C</button><span id="city" class="city-name" aria-label="Ville de la météo" hidden></span></div></main>
 <div id="notice" role="status"></div><section id="panel" aria-label="Réglages NightDial"><div class="modes"><button id="analog" class="active">◷ Analogique</button><button id="numeric">◫ Numérique</button><button id="flip">▣ Flip Clock</button></div><div class="settings"><span>Couleur</span><div class="swatches"><button class="swatch active" data-color="red" aria-label="Rouge nuit"></button><button class="swatch" data-color="amber" aria-label="Ambre"></button><button class="swatch" data-color="green" aria-label="Vert"></button><button class="swatch" data-color="blue" aria-label="Bleu"></button><button class="swatch" data-color="violet" aria-label="Violet"></button><button class="swatch" data-color="cyan" aria-label="Cyan"></button><button class="swatch" data-color="pink" aria-label="Rose"></button><button class="swatch" data-color="white" aria-label="Blanc doux"></button></div><label for="bright">Intensité visuelle</label><input type="range" id="bright" min="5" max="100" value="55"><label for="dim">Atténuation</label><input type="range" id="dim" min="0" max="95" value="40"><label for="wake">Maintenir éveillé</label><input type="checkbox" id="wake" checked><label for="seconds">Trotteuse</label><input type="checkbox" id="seconds"><label for="showWeather">Température</label><input type="checkbox" id="showWeather" checked></div><details class="advanced" id="advancedOptions">
   <summary>Options Nuit, Flip Pro et Réveil</summary>
   <div class="advanced-settings">
@@ -104,7 +132,8 @@ body.flip-mode #alarmSvg.minute-flip{transform-origin:center center;animation:fl
     <label for="nightEnd">Fin du mode nuit</label><input id="nightEnd" type="time" value="07:00">
     <label for="nightDim">Atténuation de nuit</label><input id="nightDim" type="range" min="25" max="95" step="5" value="75">
     <label for="nightMinimal">Masquer date/météo la nuit</label><input id="nightMinimal" type="checkbox">
-    <label for="flipPro">Animation Flip Pro</label><input id="flipPro" type="checkbox" checked>
+    <label for="flipPro">Animation Flip gare</label><input id="flipPro" type="checkbox" checked>
+    <button type="button" id="flipDemo" class="preview-action">Tester les volets de gare</button>
     <label for="oledShift">Protection OLED (micro-déplacement)</label><input id="oledShift" type="checkbox" checked>
     <label for="sunrise">Réveil progressif visuel</label><input id="sunrise" type="checkbox">
     <label for="wakeTime">Heure du réveil visuel</label><input id="wakeTime" type="time" value="07:00">
