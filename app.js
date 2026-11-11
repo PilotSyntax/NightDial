@@ -44,7 +44,7 @@ function render(){
   ['--flip-top','--flip-mid','--flip-bottom','--flip-foreground','--flip-border','--flip-glow'].forEach((name,i)=>document.documentElement.style.setProperty(name,flip[i]));
   // Night and sunrise apply visual settings without overwriting saved daytime preferences.
   updateAdaptiveDisplay();
-  $('bright').value=state.bright;$('dim').value=state.dim;$('wake').checked=state.wake;$('seconds').checked=state.seconds;$('showWeather').checked=state.showWeather;$('weather').style.display=state.showWeather?'':'none';
+  $('bright').value=state.bright;$('dim').value=state.dim;$('wake').checked=state.wake;$('seconds').checked=state.seconds;$('showWeather').checked=state.showWeather;$('weather').style.display=state.showWeather?'':'none';$('city').hidden=!state.showWeather||!cityLabel;
   $('secondHand').style.display=state.seconds?'':'none';
   for(const id of ['smartNight','nightMinimal','flipPro','oledShift','sunrise'])$(id).checked=Boolean(state[id]);
   for(const id of ['nightStart','nightEnd','wakeTime'])$(id).value=state[id];
@@ -119,59 +119,76 @@ function updateAdaptiveDisplay(now=new Date()){
   lastAdaptiveMinute=minute;
 }
 
-const segmentMap={
-'0':[0,1,2,3,4,5],'1':[1,2],'2':[0,1,6,4,3],
-'3':[0,1,6,2,3],'4':[5,6,1,2],'5':[0,5,6,2,3],
-'6':[0,5,6,4,2,3],'7':[0,1,2],'8':[0,1,2,3,4,5,6],
-'9':[0,1,2,3,5,6]
-};
-const polygons=[
-'25,9 126,9 139,22 123,36 28,36 12,23',
-'139,28 151,41 151,126 136,143 123,126 123,44',
-'139,151 151,168 151,247 139,262 123,247 123,169',
-'28,258 123,258 139,273 125,285 24,285 12,273',
-'12,151 28,169 28,247 12,262 0,247 0,169',
-'12,28 28,44 28,126 12,143 0,126 0,42',
-'27,137 124,137 137,150 123,164 28,164 13,150'
-];
-const alarmGroup=$('segmentDigits');
-const segmentElements=[];
-for(let digitIndex=0;digitIndex<4;digitIndex++){
-  const x=[7,204,462,659][digitIndex];
-  const group=document.createElementNS(svgNS,'g');
-  group.setAttribute('transform','translate('+x+',0) scale(.91,1)');
-  const parts=[];
-  for(let i=0;i<7;i++){
-    const polygon=document.createElementNS(svgNS,'polygon');
-    polygon.setAttribute('points',polygons[i]);
-    polygon.setAttribute('class','off');
-    group.append(polygon);
-    parts.push(polygon);
-  }
-  alarmGroup.append(group);
-  segmentElements.push(parts);
+
+/* v15: Real split-flap station board. Each digit has its own upper and lower leaf.
+   The final static value is applied after the flip completes. */
+const stationTiles=[];
+const reducedMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function createTile(index){
+  const cell=document.createElement('div');
+  cell.className='station-cell';
+  cell.setAttribute('aria-hidden','true');
+  cell.innerHTML='<div class="station-half top"><span class="glyph">0</span></div>'+
+    '<div class="station-half bottom"><span class="glyph">0</span></div>'+
+    '<div class="station-flap front"><span class="glyph">0</span></div>'+
+    '<div class="station-flap back"><span class="glyph">0</span></div>';
+  $('stationCells').appendChild(cell);
+  return {
+    cell,
+    top:cell.querySelector('.station-half.top .glyph'),
+    bottom:cell.querySelector('.station-half.bottom .glyph'),
+    front:cell.querySelector('.station-flap.front .glyph'),
+    back:cell.querySelector('.station-flap.back .glyph'),
+    value:'0',token:0,timer:null,startTimer:null
+  };
 }
-for(const y of [95,203]){
-  const dot=document.createElementNS(svgNS,'circle');
-  dot.setAttribute('cx','419');dot.setAttribute('cy',String(y));
-  dot.setAttribute('r','13');dot.setAttribute('class','lit');
-  alarmGroup.append(dot);
+for(let i=0;i<4;i++){
+  if(i===2){
+    const colon=document.createElement('span');
+    colon.className='station-colon';colon.textContent=':';
+    $('stationCells').appendChild(colon);
+  }
+  stationTiles.push(createTile(i));
 }
-let lastAlarmText='';
-function renderAlarmDigits(value){
-  if(value===lastAlarmText)return;
-  const animate=lastAlarmText!==''&&state.mode==='flip'&&state.flipPro&&document.visibilityState==='visible'&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  lastAlarmText=value;
-  for(let digit=0;digit<4;digit++){
-    const on=segmentMap[value[digit]]||[];
-    for(let seg=0;seg<7;seg++)segmentElements[digit][seg].setAttribute('class',on.includes(seg)?'lit':'off');
-  }
-  if(animate){
-    const face=$('alarmSvg');
-    face.classList.remove('minute-flip');
-    void face.offsetWidth;
-    face.classList.add('minute-flip');
-  }
+let lastStationValue='';
+function settleTile(tile,value){
+  clearTimeout(tile.timer);clearTimeout(tile.startTimer);
+  tile.token++;
+  tile.value=value;
+  for(const part of [tile.top,tile.bottom,tile.front,tile.back])part.textContent=value;
+  tile.cell.classList.remove('flipping');
+}
+function flipTile(tile,value,delay=0){
+  if(value===tile.value)return;
+  clearTimeout(tile.timer);clearTimeout(tile.startTimer);
+  tile.token++;
+  const token=tile.token;
+  tile.startTimer=setTimeout(()=>{
+    if(tile.token!==token)return;
+    const old=tile.value;
+    tile.value=value;
+    tile.top.textContent=value;
+    tile.bottom.textContent=old;
+    tile.front.textContent=old;
+    tile.back.textContent=value;
+    tile.cell.classList.remove('flipping');
+    void tile.cell.offsetWidth;
+    tile.cell.classList.add('flipping');
+    tile.timer=setTimeout(()=>{
+      if(tile.token!==token)return;
+      settleTile(tile,value);
+    },670);
+  },delay);
+}
+function renderStationDigits(value,{force=false}={}){
+  if(!/^\d{4}$/.test(value)||(!force&&value===lastStationValue))return;
+  lastStationValue=value;
+  const animate=Boolean(state.flipPro)&&state.mode==='flip'&&document.visibilityState==='visible'&&!reducedMotion();
+  stationTiles.forEach((tile,i)=>{
+    const next=value.charAt(i);
+    if(!animate||force&&tile.value==='0'&&lastStationValue==='0000')settleTile(tile,next);
+    else if(tile.value!==next)flipTile(tile,next,i*80);
+  });
 }
 
 function clock(){
@@ -180,8 +197,7 @@ function clock(){
   $('minuteHand').setAttribute('transform',`rotate(${m*6} 200 200)`);
   $('secondHand').setAttribute('transform',`rotate(${s*6} 200 200)`);
   const hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
-  renderAlarmDigits(hh+mm);
-  $('alarmMeridiem').textContent=d.getHours()<12?'AM':'PM';
+  renderStationDigits(hh+mm);
   $('classicDigital').textContent=hh+':'+mm;
   $('digital').setAttribute('aria-label',hh+' heures '+mm);
   $('date').textContent=d.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
@@ -248,6 +264,19 @@ $('panel').addEventListener('pointerup',()=>{clearTimeout(panelTimer);panelTimer
 $('analog').addEventListener('click',()=>{state.mode='analog';render()});
 $('numeric').addEventListener('click',()=>{state.mode='numeric';render()});
 $('flip').addEventListener('click',()=>{state.mode='flip';render()});
+$('flipDemo').addEventListener('click',()=>{
+  const now=new Date();
+  const target=new Date(now.getTime()+60000);
+  const t=String(target.getHours()).padStart(2,'0')+String(target.getMinutes()).padStart(2,'0');
+  state.mode='flip';
+  render();
+  showControls(false);
+  renderStationDigits(t);
+  setTimeout(()=>{
+    const actual=new Date();
+    renderStationDigits(String(actual.getHours()).padStart(2,'0')+String(actual.getMinutes()).padStart(2,'0'));
+  },1350);
+});
 document.querySelectorAll('.swatch').forEach(el=>el.addEventListener('click',()=>{state.color=el.dataset.color;render()}));
 ['bright','dim'].forEach(id=>$(id).addEventListener('input',e=>{state[id]=Number(e.target.value);render()}));
 $('seconds').addEventListener('change',e=>{state.seconds=e.target.checked;render();startClockTimer()});
@@ -266,6 +295,39 @@ $('sunrisePreview').addEventListener('click',()=>{
 $('showWeather').addEventListener('change',e=>{state.showWeather=e.target.checked;render();if(state.showWeather)updateWeather(true)});
 let weatherLast=0,weatherBusy=false;
 const weatherButton=$('weather');
+let cityLabel='';
+let cityLastAttempt=0;
+let cityCache=null;
+try{
+  cityCache=JSON.parse(localStorage.getItem('nightdial-city-v1')||'null');
+  if(cityCache&&Date.now()-cityCache.at<86400000&&typeof cityCache.name==='string'){
+    cityLabel=cityCache.name;
+  }
+}catch{}
+function applyCity(name){
+  cityLabel=name||'';
+  $('city').textContent=cityLabel?'• '+cityLabel:'';
+  $('city').hidden=!state.showWeather||!cityLabel;
+}
+applyCity(cityLabel);
+async function resolveCity(lat,lon){
+  const near=cityCache&&Math.abs(cityCache.lat-lat)<.04&&Math.abs(cityCache.lon-lon)<.04;
+  if(near&&Date.now()-cityCache.at<86400000){applyCity(cityCache.name);return}
+  if(Date.now()-cityLastAttempt<3600000)return;
+  cityLastAttempt=Date.now();
+  try{
+    const query='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+
+      encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&localityLanguage=fr';
+    const result=await fetch(query,{cache:'no-store'});
+    if(!result.ok)throw Error('Geocoding unavailable');
+    const geo=await result.json();
+    const name=String(geo.city||geo.locality||'').trim().slice(0,80);
+    if(!name)return;
+    cityCache={name,lat,lon,at:Date.now()};
+    try{localStorage.setItem('nightdial-city-v1',JSON.stringify(cityCache))}catch{}
+    applyCity(name);
+  }catch{ /* No inferred location if reverse geocoding cannot be reached. */ }
+}
 const weatherIcons=(code,isDay)=>{
   if(code===0)return isDay?'☀':'☾';
   if(code===1)return isDay?'🌤':'☾';
@@ -296,6 +358,7 @@ async function updateWeather(force=false){
     weatherButton.textContent=`${weatherIcons(code,data.current?.is_day===1)} ${Math.round(temp)}°C`;
     weatherButton.title='Température extérieure actuelle (Open-Meteo) • toucher pour actualiser';
     weatherLast=Date.now();
+    await resolveCity(lat,lon);
   }catch(error){
     weatherButton.textContent='☁ --°C';
     weatherButton.title='Touchez pour autoriser la localisation et récupérer la météo';
