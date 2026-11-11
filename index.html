@@ -57,16 +57,59 @@ body.flip-mode #digital{display:flex;align-items:center;justify-content:center;w
  body.flip-mode #digital{width:100%}
  body.flip-mode #date,body.flip-mode #weather{font-size:clamp(18px,3vw,30px)}
 }
+
+/* NightDial v14 — adaptive night mode, low-power OLED, flip animation, sunrise */
+#clockFace,#info{transform:translate(var(--oled-x,0px),var(--oled-y,0px))}
+#clockFace{transition:transform 2s ease-out}
+#info{transition:transform 2s ease-out,opacity .5s ease}
+body.night-minimal #info{opacity:0;pointer-events:none}
+body.night-minimal #info:focus-within{opacity:1;pointer-events:auto}
+#clockArea{isolation:isolate}
+#sunriseGlow{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--sunrise-strength,0);background:radial-gradient(ellipse 85% 46% at 50% 115%,rgba(255,173,82,.34),rgba(255,106,49,.15) 42%,transparent 95%);transition:opacity 45s linear}
+#clockArea>*{z-index:1}
+#panel{max-height:min(88dvh,790px);overflow-y:auto;overscroll-behavior:contain}
+.advanced{border-top:1px solid #333;margin-top:12px;padding-top:10px}
+.advanced summary{cursor:pointer;color:#e0e0e6;font-size:13px;font-weight:600;list-style:auto;padding:5px 0}
+.advanced .advanced-settings{display:grid;grid-template-columns:minmax(115px,1fr) minmax(0,1.3fr);align-items:center;gap:11px 9px;padding-top:14px;font-size:12px}
+.advanced input[type=time],.advanced select{width:100%;min-height:36px;color:#eee;background:#28282e;border:1px solid #555;border-radius:8px;padding:6px;font:inherit;color-scheme:dark}
+.advanced input[type=range]{width:100%;accent-color:#b83b36}
+.advanced input[type=checkbox]{width:19px;height:19px;accent-color:#b83b36}
+#nightStatus{font-size:11px;color:#aaa;grid-column:1/-1;line-height:1.4}
+body.flip-mode .alarm-shell{perspective:850px}
+body.flip-mode .alarm-shell:after{content:"";position:absolute;top:51%;left:3%;right:3%;height:1px;z-index:3;pointer-events:none;background:linear-gradient(90deg,transparent,#ffffff25 15%,#070709ae 50%,#ffffff21 85%,transparent);box-shadow:0 2px 4px #000a}
+body.flip-mode .alarm-shell .hinge-shadow{position:absolute;top:51%;left:3%;right:3%;height:6px;transform:translateY(-2px);background:linear-gradient(180deg,#0008,transparent);pointer-events:none;z-index:3}
+body.flip-mode #alarmSvg.minute-flip{transform-origin:center center;animation:flipPro .55s cubic-bezier(.33,.05,.21,1)}
+@keyframes flipPro{0%{transform:perspective(900px) rotateX(-14deg);filter:brightness(.68)}52%{transform:perspective(900px) rotateX(8deg);filter:brightness(.90)}100%{transform:perspective(900px) rotateX(0);filter:brightness(1)}}
+@media(prefers-reduced-motion:reduce){body.flip-mode #alarmSvg.minute-flip{animation:none}}
+@media(orientation:landscape){#panel{max-height:92dvh}.advanced .advanced-settings{gap:8px}}
+
 </style></head>
 <body><div id="top"><strong>NIGHTDIAL</strong><span id="wakeStatus">Écran éveillé : vérification…</span></div>
+<div id="sunriseGlow" aria-hidden="true"></div>
 <main id="clockArea" aria-label="Horloge. Toucher pour afficher ou masquer les paramètres."><div id="clockFace">
 <svg id="dial" viewBox="0 0 400 400" role="img" aria-label="Horloge analogique"><circle class="outer" cx="200" cy="200" r="195"/><g class="ticks" id="ticks"></g><g class="numbers" id="numbers"></g><line id="hourHand" class="hand hour" x1="200" y1="213" x2="200" y2="114"/><line id="minuteHand" class="hand minute" x1="200" y1="219" x2="200" y2="65"/><line id="secondHand" class="hand second" x1="200" y1="235" x2="200" y2="52" style="display:none"/><circle class="hub" cx="200" cy="200" r="5"/></svg>
 <div id="classicDigital" role="timer" aria-live="off">00:00</div><div id="digital" role="timer" aria-live="off" aria-label="Heure">
 <div class="alarm-shell">
-  <div class="alarm-meta"><span id="alarmMeridiem">24H</span><span class="alarm-status" aria-hidden="true">Zzᶻ　♧</span></div>
+  <div class="alarm-meta"><span id="alarmMeridiem">24H</span><span class="alarm-status" aria-hidden="true">Zzᶻ　♧</span></div><div class="hinge-shadow" aria-hidden="true"></div>
   <svg id="alarmSvg" viewBox="0 0 840 300" role="img" aria-label="Chiffres à segments lumineux">
     <g id="segmentDigits"></g>
   </svg>
 </div>
 </div></div><div id="info"><div id="date"></div><button id="weather" type="button" title="Actualiser la température" aria-label="Température locale">☁ --°C</button></div></main>
-<div id="notice" role="status"></div><section id="panel" aria-label="Réglages NightDial"><div class="modes"><button id="analog" class="active">◷ Analogique</button><button id="numeric">◫ Numérique</button><button id="flip">▣ Flip Clock</button></div><div class="settings"><span>Couleur</span><div class="swatches"><button class="swatch active" data-color="red" aria-label="Rouge nuit"></button><button class="swatch" data-color="amber" aria-label="Ambre"></button><button class="swatch" data-color="green" aria-label="Vert"></button><button class="swatch" data-color="blue" aria-label="Bleu"></button><button class="swatch" data-color="violet" aria-label="Violet"></button><button class="swatch" data-color="cyan" aria-label="Cyan"></button><button class="swatch" data-color="pink" aria-label="Rose"></button><button class="swatch" data-color="white" aria-label="Blanc doux"></button></div><label for="bright">Intensité visuelle</label><input type="range" id="bright" min="5" max="100" value="55"><label for="dim">Atténuation</label><input type="range" id="dim" min="0" max="95" value="40"><label for="wake">Maintenir éveillé</label><input type="checkbox" id="wake" checked><label for="seconds">Trotteuse</label><input type="checkbox" id="seconds"><label for="showWeather">Température</label><input type="checkbox" id="showWeather" checked></div><div class="footer"><span>Portrait + paysage • Mode nuit OLED<br>Toucher l'horloge pour afficher les réglages.</span><button id="hide">Masquer</button></div></section><script src="app.js" defer></script></body></html>
+<div id="notice" role="status"></div><section id="panel" aria-label="Réglages NightDial"><div class="modes"><button id="analog" class="active">◷ Analogique</button><button id="numeric">◫ Numérique</button><button id="flip">▣ Flip Clock</button></div><div class="settings"><span>Couleur</span><div class="swatches"><button class="swatch active" data-color="red" aria-label="Rouge nuit"></button><button class="swatch" data-color="amber" aria-label="Ambre"></button><button class="swatch" data-color="green" aria-label="Vert"></button><button class="swatch" data-color="blue" aria-label="Bleu"></button><button class="swatch" data-color="violet" aria-label="Violet"></button><button class="swatch" data-color="cyan" aria-label="Cyan"></button><button class="swatch" data-color="pink" aria-label="Rose"></button><button class="swatch" data-color="white" aria-label="Blanc doux"></button></div><label for="bright">Intensité visuelle</label><input type="range" id="bright" min="5" max="100" value="55"><label for="dim">Atténuation</label><input type="range" id="dim" min="0" max="95" value="40"><label for="wake">Maintenir éveillé</label><input type="checkbox" id="wake" checked><label for="seconds">Trotteuse</label><input type="checkbox" id="seconds"><label for="showWeather">Température</label><input type="checkbox" id="showWeather" checked></div><details class="advanced" id="advancedOptions">
+  <summary>Options Nuit, Flip Pro et Réveil</summary>
+  <div class="advanced-settings">
+    <label for="smartNight">Nuit automatique</label><input id="smartNight" type="checkbox" checked>
+    <label for="nightStart">Début du mode nuit</label><input id="nightStart" type="time" value="22:00">
+    <label for="nightEnd">Fin du mode nuit</label><input id="nightEnd" type="time" value="07:00">
+    <label for="nightDim">Atténuation de nuit</label><input id="nightDim" type="range" min="25" max="95" step="5" value="75">
+    <label for="nightMinimal">Masquer date/météo la nuit</label><input id="nightMinimal" type="checkbox">
+    <label for="flipPro">Animation Flip Pro</label><input id="flipPro" type="checkbox" checked>
+    <label for="oledShift">Protection OLED (micro-déplacement)</label><input id="oledShift" type="checkbox" checked>
+    <label for="sunrise">Réveil progressif visuel</label><input id="sunrise" type="checkbox">
+    <label for="wakeTime">Heure du réveil visuel</label><input id="wakeTime" type="time" value="07:00">
+    <label for="sunriseDuration">Durée de transition</label><select id="sunriseDuration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select>
+    <div id="nightStatus" role="status">Réveil visuel uniquement : NightDial doit rester ouvert et l'écran actif.</div>
+  </div>
+</details>
+<div class="footer"><span>Portrait + paysage • Mode nuit OLED<br>Toucher l'horloge pour afficher les réglages.</span><button id="hide">Masquer</button></div></section><script src="app.js" defer></script></body></html>
