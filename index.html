@@ -77,6 +77,9 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
 #alarmIndicator .alarm-time{font-weight:500}
 #alarmCountdown{font-size:clamp(11px,2.5vw,13px);font-weight:400;color:var(--accent);opacity:.84;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:0;border-left:1px solid currentColor;padding-left:8px}
 #alarmCountdown[hidden]{display:none!important}
+#morningBrief{flex:0 0 100%;display:flex;align-items:center;justify-content:center;gap:clamp(8px,2vw,17px);color:var(--accent);font-size:clamp(12px,3vw,18px);font-variant-numeric:tabular-nums;opacity:.85;animation:morningReveal 380ms ease-out both}
+#morningBrief[hidden]{display:none!important}
+@keyframes morningReveal{from{opacity:0;transform:translateY(7px)}to{opacity:.85;transform:translateY(0)}}
 @media(orientation:landscape){#alarmIndicator{top:calc(12px + env(safe-area-inset-top));right:calc(15px + env(safe-area-inset-right))}}
 
 /* v19.2 diagnostics: unmistakable sensor-free 3D demonstration. */
@@ -101,7 +104,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div id="numeric" class="mode" role="timer" aria-live="off" aria-label="Horloge numérique"><div class="num-pair" id="numHours"><span class="num-digit">0</span><span class="num-digit">0</span></div><span class="breath" aria-hidden="true">:</span><div class="num-pair" id="numMinutes"><span class="num-digit">0</span><span class="num-digit">0</span></div></div>
       <div id="flip" class="mode" role="timer" aria-live="off" aria-label="Horloge à volets de gare"><div class="rail-header"><span>NIGHTDIAL</span><span>STATION CLOCK</span></div><div class="rail-board" id="railBoard"></div></div>
     </div>
-    <div id="context" aria-label="Date et météo"><span id="date"></span><span id="weatherLine" hidden><span id="weatherIcon"></span><span id="temperature"></span><span id="city"></span></span></div>
+    <div id="context" aria-label="Date et météo"><span id="date"></span><span id="weatherLine" hidden><span id="weatherIcon"></span><span id="temperature"></span><span id="city"></span></span><div id="morningBrief" role="status" aria-live="off" hidden></div></div>
   </main>
   <div id="motionProof" role="status" aria-live="polite" hidden>TEST 3D · NightDial v19.2</div>
   <div id="intensityHud" role="status" aria-live="polite">☀ <span id="intensityLabel">60 %</span></div>
@@ -127,12 +130,13 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
     </section>
     <section class="tab-panel" id="pane-alarm" role="tabpanel" aria-labelledby="tab-alarm">
       <p class="section-title">Réveil progressif</p>
-      <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div><div class="field"><span>Heure du réveil</span><input aria-label="Heure du réveil" id="wakeTime" type="time"></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+      <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div>
+       <div class="field"><span>Morning Briefing<small>Météo et lever du soleil autour de l’heure du réveil</small></span><input aria-label="Activer le briefing météo du matin" id="morningBriefing" type="checkbox"></div><div class="field"><span>Heure du réveil</span><input aria-label="Heure du réveil" id="wakeTime" type="time"></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
       <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
        <div class="field"><span>Compte à rebours<small>Temps restant jusqu’au prochain réveil · près de l’alarme</small></span><input aria-label="Afficher le temps restant avant le réveil" id="showCountdown" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
-      <div class="actions"><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Le test joue trois notes au volume choisi. Monte le volume multimédia de l’iPhone.</p>
+      <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Le test joue trois notes au volume choisi. Monte le volume multimédia de l’iPhone.</p>
       <p class="status">Le réveil sonore Web Audio n'est pas fiable lorsque Safari est fermé, l'écran verrouillé ou l'app suspendue. Utilise toujours l'alarme native iOS pour les rendez-vous importants.</p>
     </section>
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
@@ -172,7 +176,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 // Migration: palette names used in older versions are still recognized.
@@ -187,7 +191,7 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
 /* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
    The display is updated only when its text changes, not every animation frame. */
 function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
@@ -218,7 +222,7 @@ function updateCountdown(now=new Date()){
     'Alarme sonore activée à '+state.wakeTime+
     (ringing?', réveil en cours':', dans '+count.description));
 }
-function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();persist();syncClockLoop()}
+function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();updateMorningBrief();persist();syncClockLoop()}
 // Analog Swiss-station dial; all marks and numerals are generated once.
 const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
 for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
@@ -252,7 +256,7 @@ function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),min
  pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
  const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
  setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
- const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now);updateCountdown(now)}
+ const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
 }
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
 function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
@@ -405,19 +409,71 @@ $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.t
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
 for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
 for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
 function updateMoon(){const cycle=29.530588853,anchor=Date.UTC(2000,0,6,18,14);const age=((Date.now()-anchor)/86400000%cycle+cycle)%cycle;const phase=age/cycle;const rx=Math.max(1,Math.abs(Math.cos(phase*Math.PI*2))*14);$('moonShade').setAttribute('rx',rx);$('moonShade').setAttribute('cx',phase<.5?15:25)}updateMoon();
 // Inline SVG weather icons; no external icon library or animation loop.
 function weatherSVG(code,isDay){const stroke='stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"';let s='';if(code===0||code===1){s=isDay?'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>':'<path d="M19 16A8 8 0 0 1 8 5 8 8 0 1 0 19 16Z"/>'}else if(code<=3){s='<path d="M6 18h11a4 4 0 0 0 .3-8 6 6 0 0 0-11.4 1A3.5 3.5 0 0 0 6 18Z"/>'}else if(code<70){s='<path d="M6 14h11a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 6 14Zm3 4-1 3m6-3-1 3m6-3-1 3"/>'}else if(code<90){s='<path d="M5 14h13a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 5 14Zm7 3v5m-3-2h6m-5-3 4 5m0-5-4 5"/>'}else{s='<path d="M6 15h11a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 6 15Zm7 1-3 4h3l-2 3"/>'}return '<svg viewBox="0 0 24 24" aria-hidden="true"><g '+stroke+'>'+s+'</g></svg>'}
+
+/* v21: local-date morning window and forecast from the existing weather request. */
+let morningForecast=null,morningPreviewUntil=0;
+function morningWindow(now=new Date(),wake=state.wakeTime){
+ const minute=minuteOfDay(wake);if(minute===null)return null;
+ const target=new Date(now);target.setHours(Math.floor(minute/60),minute%60,0,0);
+ for(const offset of [0,-1,1]){
+  const t=new Date(target);t.setDate(t.getDate()+offset);
+  const delta=(now.getTime()-t.getTime())/60000;
+  if(delta>=-30&&delta<=90)return t;
+ }
+ return null;
+}
+function morningDateKey(d){
+ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+}
+function nextWakeForBrief(now=new Date()){
+ const m=minuteOfDay(state.wakeTime);if(m===null)return null;
+ const t=new Date(now);t.setHours(Math.floor(m/60),m%60,0,0);
+ if(t.getTime()<now.getTime()-90*60000)t.setDate(t.getDate()+1);
+ return t;
+}
+function forecastForMorning(wake,forecast=morningForecast){
+ if(!wake||!forecast)return null;
+ const day=morningDateKey(wake),hour=String(wake.getHours()).padStart(2,'0');
+ const slot=forecast.hourly?.time?.indexOf(day+'T'+hour+':00')??-1;
+ const daySlot=forecast.daily?.time?.indexOf(day)??-1;
+ const temperature=slot>=0?forecast.hourly?.temperature_2m?.[slot]:null;
+ const sunrise=daySlot>=0?forecast.daily?.sunrise?.[daySlot]:null;
+ if(!Number.isFinite(temperature)&&!sunrise)return null;
+ return {temperature:Number.isFinite(temperature)?Math.round(temperature)+'°C':null,
+   sunrise:typeof sunrise==='string'&&sunrise.includes('T')?sunrise.slice(11,16):null};
+}
+function updateMorningBrief(now=new Date()){
+ const node=$('morningBrief'),preview=Date.now()<morningPreviewUntil;
+ const wake=preview?nextWakeForBrief(now):morningWindow(now);
+ const show=Boolean(state.morningBriefing)&&Boolean(wake)&&document.visibilityState==='visible'&&(!sheetOpen||preview);
+ node.hidden=!show;if(!show)return;
+ const forecast=forecastForMorning(wake),parts=['☀ Matin'];
+ if(forecast?.temperature)parts.push('Prévu '+forecast.temperature);
+ if(forecast?.sunrise)parts.push('Lever du soleil '+forecast.sunrise);
+ if(!forecast)parts.push(morningForecast?'Prévisions indisponibles':'Chargement des prévisions…');
+ const value=parts.join(' · ');if(node.textContent!==value)node.textContent=value;
+}
+$('previewMorning').addEventListener('click',()=>{
+ if(!state.morningBriefing){state.morningBriefing=true;render()}
+ morningPreviewUntil=Date.now()+10000;
+ setSheet(false);updateMorningBrief();updateWeather(true);
+ toast('Morning Briefing · aperçu 10 s');
+ setTimeout(updateMorningBrief,10100);
+});
+
 let weatherInfo=null,weatherBusy=false,weatherAt=0,cityCache=null;
 try{cityCache=JSON.parse(localStorage.getItem('nightdial-city-v1')||'null')}catch{}
 async function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(Error('Localisation indisponible'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:11000,maximumAge:0})})}
 async function lookupCity(lat,lon){if(cityCache&&Date.now()-cityCache.at<86400000&&Math.abs(cityCache.lat-lat)<.04&&Math.abs(cityCache.lon-lon)<.04)return cityCache.name;try{const url='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&localityLanguage=fr';const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('Ville introuvable');const data=await res.json();const name=String(data.city||data.locality||'').trim().slice(0,70);if(name){cityCache={name,lat,lon,at:Date.now()};try{localStorage.setItem('nightdial-city-v1',JSON.stringify(cityCache))}catch{}}return name}catch{return ''}}
 function drawWeather(){if(!weatherInfo){$('weatherLine').hidden=true;return}$('weatherLine').hidden=!state.showWeather;$('weatherIcon').innerHTML=weatherSVG(weatherInfo.code,weatherInfo.day);$('weatherIcon').className=weatherInfo.code<=1?'sun':weatherInfo.code<=3?'cloud':weatherInfo.code<70?'rain':weatherInfo.code<90?'snow':'storm';$('temperature').textContent=Math.round(weatherInfo.temp)+'°C';$('city').textContent=weatherInfo.city?'· '+weatherInfo.city:''}
-async function updateWeather(force=false){if(weatherBusy||!state.showWeather||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent='Météo hors ligne : dernière donnée conservée.';return}weatherBusy=true;$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();drawWeather();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.')}finally{weatherBusy=false}}
+async function updateWeather(force=false){if(weatherBusy||(!state.showWeather&&!state.morningBriefing)||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent='Météo hors ligne : dernière donnée conservée.';return}weatherBusy=true;$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&daily=sunrise&forecast_days=3&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();morningForecast={hourly:data.hourly,daily:data.daily};drawWeather();updateMorningBrief();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.');updateMorningBrief()}finally{weatherBusy=false}}
 $('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
 // Web Audio: sound is created by oscillators, gated behind a user gesture.
 let audioCtx=null,alarmTimer=null,alarmGain=null,alarmStarted=0,alarmActive=false,snoozeUntil=0,lastAlarmDay='',previewAudioTimer=null;
