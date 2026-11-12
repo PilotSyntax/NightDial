@@ -1,145 +1,266 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="NightDial"><meta name="description" content="Horloge de nuit analogique et numérique"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg?v=11" type="image/svg+xml"><link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=12"><title>NightDial — Horloge de nuit</title>
+<html lang="fr-CA">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NightDial">
+  <meta name="description" content="NightDial, horloge de chevet OLED premium">
+  <!-- Existing NightDial PWA resources are retained when this file replaces the GitHub Pages index. -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>NightDial — Premium Night Clock</title>
 <style>
-:root{color-scheme:dark;--color:#c8352f;--bright:.55;--dim:.4;--flip-top:#382544;--flip-mid:#473152;--flip-bottom:#1c1524;--flip-foreground:#f0d9ff;--flip-border:#6c4b7c;--flip-glow:#ad78df}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;color:#bbb;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-#clockArea{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:clamp(8px,2vh,18px);padding:calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));cursor:pointer}
-#clockFace{display:flex;align-items:center;justify-content:center;filter:brightness(var(--bright));opacity:calc(1 - var(--dim));max-width:100%;max-height:100%;min-width:0;min-height:0}
-#dial{width:min(94vw,72dvh,640px);height:min(94vw,72dvh,640px);overflow:visible}
-#dial .outer{stroke:var(--color);stroke-width:1;opacity:.45;fill:none}#dial .ticks line{stroke:var(--color);stroke-width:1.2;opacity:.48}#dial .ticks line.major{stroke-width:2.5;opacity:.8}#dial .numbers text{fill:var(--color);font-size:24px;font-family:inherit;font-weight:200;text-anchor:middle;dominant-baseline:middle}#dial .hand{stroke:var(--color);stroke-linecap:round}#dial .hour{stroke-width:9}#dial .minute{stroke-width:5}#dial .second{stroke-width:1.5;opacity:.5}#dial .hub{fill:var(--color)}
-/* Flip clock: two split-flap panels inspired by the supplied bedside clock. */
-#digital{display:none;align-items:center;justify-content:center;gap:clamp(8px,2.5vw,26px);width:min(96vw,920px);font-variant-numeric:tabular-nums}
-#classicDigital{display:none;color:var(--color);font-size:min(27vw,170px);font-weight:700;line-height:1;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:center}
-.flip-card{position:relative;isolation:isolate;width:min(44vw,435px);aspect-ratio:1.36;display:grid;place-items:center;overflow:hidden;border-radius:clamp(10px,3.2vw,28px);background:linear-gradient(180deg,var(--flip-top) 0%,var(--flip-mid) 47%,var(--flip-bottom) 50%,#0d0b12 100%);border:1px solid var(--flip-border);box-shadow:inset 0 2px 20px #ffffff13,inset 0 -14px 27px #0007,0 7px 26px #000b,0 0 28px var(--flip-glow)}
-.flip-card::before{content:"";position:absolute;inset:0 0 50%;border-radius:inherit;background:linear-gradient(180deg,#9b7bb627,transparent 85%);pointer-events:none;z-index:1}
-.flip-card::after{content:"";position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,#130e1a,#150f1cdd 20%,#130e19ee 80%,#0b0910);box-shadow:0 -1px #a78cc333,0 2px 5px #000a;z-index:3;pointer-events:none}
-.flip-digits{font-family:Georgia,"Times New Roman",serif;font-size:clamp(70px,30vw,315px);font-weight:700;line-height:.95;letter-spacing:-.095em;padding-right:.08em;color:var(--flip-foreground);text-shadow:0 2px 0 #fff5,0 4px 9px var(--flip-glow),0 0 30px var(--flip-glow);transform:translateY(-.025em);white-space:nowrap}
-.flip-card.changed .flip-digits{animation:flip-change .48s ease-in-out}
-@keyframes flip-change{0%{transform:perspective(480px) rotateX(-11deg) translateY(-.025em);filter:brightness(.75)}60%{filter:brightness(1.2)}100%{transform:perspective(480px) rotateX(0) translateY(-.025em);filter:brightness(1)}}
-@media(prefers-reduced-motion:reduce){.flip-card.changed .flip-digits{animation:none}}
-body.flip-mode #date,body.flip-mode #weather{color:var(--flip-foreground)}
-
-#info{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 16px;max-width:95vw;text-align:center}
-#date{font-size:clamp(18px,4.4vw,27px);font-weight:500;letter-spacing:.045em;color:var(--color);filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .65);text-transform:capitalize}
-#weather{border:0;background:transparent;color:var(--color);font:500 clamp(18px,4.4vw,27px) -apple-system,sans-serif;filter:brightness(var(--bright));opacity:calc((1 - var(--dim)) * .75);padding:6px 4px;cursor:pointer}
-#top{position:fixed;z-index:3;top:calc(14px + env(safe-area-inset-top));left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font-size:11px;letter-spacing:.1em;opacity:.55}#top strong{color:var(--color);font-size:12px;letter-spacing:.2em}body.numeric-mode #top strong{display:none}
-#panel{position:fixed;z-index:4;bottom:calc(14px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(94vw,460px);background:rgba(21,21,24,.97);border:1px solid #333;border-radius:19px;padding:16px 18px 12px;box-shadow:0 8px 35px #000b;transition:opacity .25s,visibility .25s}#panel.hidden,#top.hidden{opacity:0;visibility:hidden;pointer-events:none}
-button{border:0;color:#ddd;font-family:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #ddd;outline-offset:3px}.modes{display:flex;gap:7px}.modes button{background:#2b2b30;border-radius:11px;padding:11px 8px;font-size:12px;flex:1;min-width:0;white-space:nowrap}.modes button.active{background:#5c2525;color:white}
-.settings{display:grid;grid-template-columns:125px minmax(0,1fr);align-items:center;gap:13px 8px;margin-top:17px;font-size:12px}.settings input[type=range]{width:100%;accent-color:#b83b36}.swatches{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.swatch{width:27px;height:27px;flex:0 0 27px;border-radius:50%;border:2px solid transparent}.swatch.active{outline:2px solid #ccc;outline-offset:2px}.swatch[data-color=red]{background:#c8352f}.swatch[data-color=amber]{background:#ce8127}.swatch[data-color=green]{background:#2e9a60}.swatch[data-color=blue]{background:#4a82eb}.swatch[data-color=violet]{background:#ad78df}.swatch[data-color=cyan]{background:#35bdc5}.swatch[data-color=pink]{background:#db6399}.swatch[data-color=white]{background:#e8e8ee}
-.footer{font-size:11px;line-height:1.45;color:#8a8a91;margin-top:14px;display:flex;justify-content:space-between;gap:12px}.footer button{background:transparent;text-decoration:underline;color:#bbb;font-size:11px;padding:0}
-#notice{position:fixed;z-index:5;top:calc(45px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);max-width:90vw;padding:9px 14px;background:#222;color:#ccc;border:1px solid #444;border-radius:8px;font-size:12px;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}#notice.visible{opacity:1}
-body.numeric-mode #clockArea,body.flip-mode #clockArea{gap:clamp(8px,2vh,16px)}body.numeric-mode #clockFace,body.numeric-mode #info,body.flip-mode #clockFace,body.flip-mode #info{width:100%}
-@media(orientation:landscape){
-#clockArea{flex-direction:row;gap:clamp(8px,2vw,24px);padding:calc(9px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
-#dial{width:min(84dvh,66vw,640px);height:min(84dvh,66vw,640px)}#info{max-width:28vw;flex-direction:column}#date{max-width:28vw;font-size:clamp(15px,2.6vw,23px);letter-spacing:.02em}#weather{font-size:clamp(15px,2.6vw,23px)}
-body.numeric-mode #clockArea,body.flip-mode #clockArea{flex-direction:column;gap:clamp(5px,2dvh,18px)}
-body.numeric-mode #classicDigital{font-size:min(25vw,59dvh,230px)}
-body.flip-mode #digital{width:min(94vw,1100px);gap:clamp(10px,2vw,28px)}body.flip-mode .flip-card{width:min(44vw,64dvh,515px);aspect-ratio:1.40}body.flip-mode .flip-digits{font-size:min(30vw,55dvh,340px)}
-body.numeric-mode #info,body.flip-mode #info{max-width:100%;flex-direction:row;gap:10px 20px}body.numeric-mode #date,body.flip-mode #date{max-width:none}
-#panel{left:auto;right:calc(12px + env(safe-area-inset-right));transform:none;width:min(43vw,380px);bottom:calc(9px + env(safe-area-inset-bottom));padding:12px 14px 9px}#panel .settings{gap:7px;margin-top:10px;grid-template-columns:100px minmax(0,1fr)}#panel .footer{margin-top:8px}#panel .modes button{padding:7px}
-}
-
-/* NightDial v10: clear seven-segment bedside alarm appearance */
-body.flip-mode #clockFace{filter:brightness(max(.25,var(--bright)));opacity:1}
-body.flip-mode #date,body.flip-mode #weather{color:#e6e7ee;filter:brightness(max(.5,var(--bright)));opacity:1}
-#date{font-size:clamp(22px,5.25vw,36px);font-weight:600;letter-spacing:.005em;opacity:calc((1 - var(--dim)) * .95)}
-#weather{font:600 clamp(22px,5.25vw,36px) -apple-system,BlinkMacSystemFont,sans-serif;opacity:calc((1 - var(--dim)) * .95)}
-#info{gap:8px 18px;max-width:97vw}
-.alarm-shell{width:min(93vw,990px);background:linear-gradient(170deg,#131419 0%,#050507 45%,#090a0e 100%);border-radius:clamp(18px,4vw,38px);border:2px solid #303038;box-shadow:inset 0 2px 3px #ffffff15,inset 0 -8px 24px #000,0 8px 35px #0009,0 0 23px var(--flip-glow);padding:clamp(9px,2vw,22px) clamp(14px,2.5vw,28px) clamp(10px,2vw,23px);position:relative;overflow:hidden}
-.alarm-shell:before{content:"";position:absolute;inset:0 0 65%;background:linear-gradient(180deg,#ffffff0b,transparent);pointer-events:none}
-.alarm-meta{position:relative;display:flex;justify-content:space-between;align-items:center;font-size:clamp(12px,2.4vw,20px);font-weight:750;letter-spacing:.025em;color:var(--flip-foreground);margin:0 5px 7px}
-.alarm-status{letter-spacing:.06em}
-#alarmSvg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 0 6px var(--flip-glow))}
-#alarmSvg .lit{fill:var(--flip-foreground)}#alarmSvg .off{fill:#ffffff04}
-body.flip-mode #digital{display:flex;align-items:center;justify-content:center;width:100%}
-@media(orientation:landscape){
- body.flip-mode .alarm-shell{width:min(86vw,1040px);padding:8px 19px 10px}
- body.flip-mode #digital{width:100%}
- body.flip-mode #date,body.flip-mode #weather{font-size:clamp(18px,3vw,30px)}
-}
-
-/* NightDial v14 — adaptive night mode, low-power OLED, flip animation, sunrise */
-#clockFace,#info{transform:translate(var(--oled-x,0px),var(--oled-y,0px))}
-#clockFace{transition:transform 2s ease-out}
-#info{transition:transform 2s ease-out,opacity .5s ease}
-body.night-minimal #info{opacity:0;pointer-events:none}
-body.night-minimal #info:focus-within{opacity:1;pointer-events:auto}
-#clockArea{isolation:isolate}
-#sunriseGlow{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--sunrise-strength,0);background:radial-gradient(ellipse 85% 46% at 50% 115%,rgba(255,173,82,.34),rgba(255,106,49,.15) 42%,transparent 95%);transition:opacity 45s linear}
-#clockArea>*{z-index:1}
-#panel{max-height:min(88dvh,790px);overflow-y:auto;overscroll-behavior:contain}
-.advanced{border-top:1px solid #333;margin-top:12px;padding-top:10px}
-.advanced summary{cursor:pointer;color:#e0e0e6;font-size:13px;font-weight:600;list-style:auto;padding:5px 0}
-.advanced .advanced-settings{display:grid;grid-template-columns:minmax(115px,1fr) minmax(0,1.3fr);align-items:center;gap:11px 9px;padding-top:14px;font-size:12px}
-.advanced input[type=time],.advanced select{width:100%;min-height:36px;color:#eee;background:#28282e;border:1px solid #555;border-radius:8px;padding:6px;font:inherit;color-scheme:dark}
-.advanced input[type=range]{width:100%;accent-color:#b83b36}
-.advanced input[type=checkbox]{width:19px;height:19px;accent-color:#b83b36}
-#nightStatus{font-size:11px;color:#aaa;grid-column:1/-1;line-height:1.4}
-body.flip-mode .alarm-shell{perspective:850px}
-body.flip-mode .alarm-shell:after{content:"";position:absolute;top:51%;left:3%;right:3%;height:1px;z-index:3;pointer-events:none;background:linear-gradient(90deg,transparent,#ffffff25 15%,#070709ae 50%,#ffffff21 85%,transparent);box-shadow:0 2px 4px #000a}
-body.flip-mode .alarm-shell .hinge-shadow{position:absolute;top:51%;left:3%;right:3%;height:6px;transform:translateY(-2px);background:linear-gradient(180deg,#0008,transparent);pointer-events:none;z-index:3}
-body.flip-mode #alarmSvg.minute-flip{transform-origin:center center;animation:flipPro .55s cubic-bezier(.33,.05,.21,1)}
-@keyframes flipPro{0%{transform:perspective(900px) rotateX(-14deg);filter:brightness(.68)}52%{transform:perspective(900px) rotateX(8deg);filter:brightness(.90)}100%{transform:perspective(900px) rotateX(0);filter:brightness(1)}}
-@media(prefers-reduced-motion:reduce){body.flip-mode #alarmSvg.minute-flip{animation:none}}
-@media(orientation:landscape){#panel{max-height:92dvh}.advanced .advanced-settings{gap:8px}}
-
-
-/* v15 — split-flap railway departure board: independent mechanical leaves. */
-body.flip-mode #clockFace{filter:brightness(var(--bright));opacity:calc(1 - var(--dim))}
-.station-board{width:min(94vw,1000px);padding:clamp(11px,2.5vw,24px);background:linear-gradient(145deg,#1c1e23,#090a0d 55%,#141519);border:2px solid #4b4c50;border-radius:clamp(12px,2.4vw,24px);box-shadow:0 10px 40px #000b,inset 0 2px 3px #ffffff20,0 0 16px var(--flip-glow);overflow:hidden}
-.station-heading{font:600 clamp(9px,1.9vw,15px) -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.22em;color:#9f9fa4;display:flex;justify-content:space-between;margin:0 3px clamp(9px,2vw,17px)}
-.station-heading span{color:#67696f;letter-spacing:.10em}
-.station-cells{display:flex;gap:clamp(4px,1.15vw,13px);justify-content:center;align-items:center;width:100%}
-.station-cell{--tile-font:clamp(52px,17vw,175px);position:relative;flex:1 1 0;min-width:0;max-width:205px;aspect-ratio:.70;perspective:700px;background:#101114;border:1px solid #49494c;border-radius:clamp(5px,1.3vw,12px);box-shadow:inset 0 3px 8px #0008,0 4px 12px #0007;overflow:hidden;isolation:isolate}
-.station-cell::after{content:"";position:absolute;z-index:8;left:0;right:0;top:calc(50% - 1px);height:2px;background:#060607;box-shadow:0 1px 1px #5556;pointer-events:none}
-.station-half,.station-flap{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:linear-gradient(165deg,#27282c,#18191c);color:var(--flip-foreground)}
-.station-half.top,.station-flap.front{top:0;transform-origin:bottom center;border-radius:inherit}
-.station-half.bottom,.station-flap.back{bottom:0;transform-origin:top center;background:linear-gradient(160deg,#151619,#222327)}
-.station-half .glyph,.station-flap .glyph{position:absolute;display:flex;align-items:center;justify-content:center;width:100%;height:200%;font:700 var(--tile-font)/1 Georgia,"Times New Roman",serif;font-variant-numeric:tabular-nums;letter-spacing:-.065em;text-shadow:0 2px 2px #0008}
-.station-half.top .glyph,.station-flap.front .glyph{top:0}
-.station-half.bottom .glyph,.station-flap.back .glyph{top:-100%}
-.station-flap{z-index:5;visibility:hidden;transform-style:preserve-3d}
-.station-flap.front{z-index:7}
-.station-flap.back{z-index:6;transform:rotateX(90deg)}
-.station-cell.flipping .station-flap{visibility:visible}
-.station-cell.flipping .station-flap.front{animation:railTop .29s cubic-bezier(.45,0,.85,.72) forwards}
-.station-cell.flipping .station-flap.back{animation:railBottom .32s cubic-bezier(.22,.55,.25,1) .29s forwards}
-@keyframes railTop{0%{transform:rotateX(0)}100%{transform:rotateX(-90deg)}}
-@keyframes railBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
-.station-colon{flex:0 0 clamp(12px,3.3vw,32px);align-self:center;color:var(--flip-foreground);font-size:clamp(48px,13vw,150px);font-weight:800;line-height:1;filter:drop-shadow(0 2px 3px #000)}
-.city-name{font:500 clamp(16px,3.5vw,25px) -apple-system,BlinkMacSystemFont,sans-serif;color:var(--color);filter:brightness(var(--bright));opacity:calc(1 - var(--dim));white-space:nowrap}
-body.flip-mode .city-name{color:var(--flip-foreground)}
-.preview-action{grid-column:1/-1;border:1px solid #64546a;background:#39303d;color:#f4edf7;border-radius:9px;padding:9px 12px;font-size:12px}
-@media(orientation:landscape){.station-board{width:min(83vw,1040px);padding:clamp(7px,1.5vh,15px)}.station-cell{--tile-font:clamp(60px,28dvh,180px);aspect-ratio:.91}.station-heading{margin-bottom:5px}.station-colon{font-size:min(27dvh,120px)}.city-name{font-size:clamp(15px,2.5vw,23px)}}
-@media(prefers-reduced-motion:reduce){.station-cell.flipping .station-flap.front,.station-cell.flipping .station-flap.back{animation:none}}
-
-</style></head>
-<body><div id="top"><strong>NIGHTDIAL</strong><span id="wakeStatus">Écran éveillé : vérification…</span></div>
-<div id="sunriseGlow" aria-hidden="true"></div>
-<main id="clockArea" aria-label="Horloge. Toucher pour afficher ou masquer les paramètres."><div id="clockFace">
-<svg id="dial" viewBox="0 0 400 400" role="img" aria-label="Horloge analogique"><circle class="outer" cx="200" cy="200" r="195"/><g class="ticks" id="ticks"></g><g class="numbers" id="numbers"></g><line id="hourHand" class="hand hour" x1="200" y1="213" x2="200" y2="114"/><line id="minuteHand" class="hand minute" x1="200" y1="219" x2="200" y2="65"/><line id="secondHand" class="hand second" x1="200" y1="235" x2="200" y2="52" style="display:none"/><circle class="hub" cx="200" cy="200" r="5"/></svg>
-<div id="classicDigital" role="timer" aria-live="off">00:00</div><div id="digital" role="timer" aria-live="off" aria-label="Heure">
-<div class="station-board" id="stationBoard" aria-hidden="true">
-  <div class="station-heading">NIGHTDIAL <span>HORLOGE DE GARE</span></div>
-  <div class="station-cells" id="stationCells"></div>
-</div>
-</div></div><div id="info"><div id="date"></div><button id="weather" type="button" title="Actualiser la température" aria-label="Température locale">☁ --°C</button><span id="city" class="city-name" aria-label="Ville de la météo" hidden></span></div></main>
-<div id="notice" role="status"></div><section id="panel" aria-label="Réglages NightDial"><div class="modes"><button id="analog" class="active">◷ Analogique</button><button id="numeric">◫ Numérique</button><button id="flip">▣ Flip Clock</button></div><div class="settings"><span>Couleur</span><div class="swatches"><button class="swatch active" data-color="red" aria-label="Rouge nuit"></button><button class="swatch" data-color="amber" aria-label="Ambre"></button><button class="swatch" data-color="green" aria-label="Vert"></button><button class="swatch" data-color="blue" aria-label="Bleu"></button><button class="swatch" data-color="violet" aria-label="Violet"></button><button class="swatch" data-color="cyan" aria-label="Cyan"></button><button class="swatch" data-color="pink" aria-label="Rose"></button><button class="swatch" data-color="white" aria-label="Blanc doux"></button></div><label for="bright">Intensité visuelle</label><input type="range" id="bright" min="5" max="100" value="55"><label for="dim">Atténuation</label><input type="range" id="dim" min="0" max="95" value="40"><label for="wake">Maintenir éveillé</label><input type="checkbox" id="wake" checked><label for="seconds">Trotteuse</label><input type="checkbox" id="seconds"><label for="showWeather">Température</label><input type="checkbox" id="showWeather" checked></div><details class="advanced" id="advancedOptions">
-  <summary>Options Nuit, Flip Pro et Réveil</summary>
-  <div class="advanced-settings">
-    <label for="smartNight">Nuit automatique</label><input id="smartNight" type="checkbox" checked>
-    <label for="nightStart">Début du mode nuit</label><input id="nightStart" type="time" value="22:00">
-    <label for="nightEnd">Fin du mode nuit</label><input id="nightEnd" type="time" value="07:00">
-    <label for="nightDim">Atténuation de nuit</label><input id="nightDim" type="range" min="25" max="95" step="5" value="75">
-    <label for="nightMinimal">Masquer date/météo la nuit</label><input id="nightMinimal" type="checkbox">
-    <label for="flipPro">Animation Flip gare</label><input id="flipPro" type="checkbox" checked>
-    <button type="button" id="flipDemo" class="preview-action">Tester les volets de gare</button>
-    <label for="oledShift">Protection OLED (micro-déplacement)</label><input id="oledShift" type="checkbox" checked>
-    <label for="sunrise">Réveil progressif visuel</label><input id="sunrise" type="checkbox">
-    <label for="wakeTime">Heure du réveil visuel</label><input id="wakeTime" type="time" value="07:00">
-    <label for="sunriseDuration">Durée de transition</label><select id="sunriseDuration"><option value="15">15 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select>
-    <button type="button" id="sunrisePreview" style="grid-column:1/-1;background:#50392e;border:1px solid #a36d42;border-radius:9px;padding:10px 12px;text-align:center">Aperçu du lever du soleil (8 s)</button>
-    <div id="nightStatus" role="status">Réveil visuel uniquement : NightDial doit rester ouvert et l'écran actif.</div>
+/* --------------------------------------------------------------------------
+   NIGHTDIAL PREMIUM — all design tokens are local; no framework or CDN.
+   The requested black is #000, with one user-selected accent.
+   -------------------------------------------------------------------------- */
+:root{color-scheme:dark;--accent:#d2554d;--rgb:210,85,77;--bright:.6;--dim:.25;--sunrise:0;--shift-x:0px;--shift-y:0px;--scale:1;--transition:260ms;--fg:rgba(255,255,255,.94);--muted:rgba(255,255,255,.53);--panel:rgba(20,21,24,.84)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;width:100%;background:#000;color:var(--fg)}
+html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none}button,input,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+[hidden]{display:none!important}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#sky{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 450ms;background:#000;overflow:hidden}body.ambient #sky{opacity:1}.star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:var(--o,.4);box-shadow:0 0 5px #fff7;transform:translateZ(0)}
+#sunriseLayer{position:fixed;inset:0;pointer-events:none;opacity:var(--sunrise);background:linear-gradient(to top,rgba(255,171,82,.68),rgba(221,82,70,.24) 35%,rgba(71,42,98,.1) 70%,transparent);transition:opacity 35s linear;will-change:opacity}
+#sunriseLayer::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(255,234,191,.75),rgba(255,203,143,.21) 54%,rgba(255,226,194,.05));opacity:var(--sunrise-daylight,0);transition:opacity 35s linear}
+#clockStage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(14px,2.6vh,32px);padding:calc(22px + env(safe-area-inset-top)) calc(17px + env(safe-area-inset-right)) calc(26px + env(safe-area-inset-bottom)) calc(17px + env(safe-area-inset-left));touch-action:none;cursor:default;outline:none}
+#clockVisual{display:flex;align-items:center;justify-content:center;width:100%;min-height:0;max-height:80%;filter:brightness(var(--bright));opacity:calc(1 - var(--dim));transform:translate(var(--shift-x),var(--shift-y)) scale(var(--scale));transition:opacity 300ms,filter 350ms,transform 2s ease}
+.mode{display:none;max-width:100%}body[data-mode="analog"] #analog,body[data-mode="numeric"] #numeric,body[data-mode="flip"] #flip{display:flex}
+#analog{width:min(87vw,67dvh,600px);aspect-ratio:1;align-items:center;justify-content:center}#analog svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 12px rgba(var(--rgb),.14))}
+.clock-rim{fill:#000;stroke:var(--accent);stroke-opacity:.32;stroke-width:1.3}.clock-tick{stroke:var(--accent);stroke-linecap:round;stroke-opacity:.66}.clock-hour{font-size:27px;font-weight:300;fill:var(--accent);dominant-baseline:middle;text-anchor:middle;letter-spacing:-.03em}.hand{stroke:var(--accent);stroke-linecap:round;filter:drop-shadow(2px 3px 3px #000b)}.hour-hand{stroke-width:8}.minute-hand{stroke-width:4}.second-hand{stroke-width:1.6}.hub{fill:var(--accent)}
+#numeric{align-items:center;justify-content:center;gap:0;white-space:nowrap;color:var(--accent);font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.072em;font-weight:200;line-height:.91;text-shadow:0 0 25px rgba(var(--rgb),.13)}
+.num-pair{display:flex;gap:.012em;font-size:clamp(76px,24.3vw,280px);font-weight:200}.num-digit{display:inline-flex;align-items:center;justify-content:center;width:.60em;min-width:0}.num-digit.changed{animation:digitSlide 340ms ease both}
+@keyframes digitSlide{0%{opacity:.1;transform:translateY(12px);filter:blur(5px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}.breath{font-size:clamp(73px,20vw,230px);font-weight:200;margin:-.035em .02em .02em -.02em;animation:breathe 2.5s ease-in-out infinite}@keyframes breathe{0%,100%{opacity:.27}50%{opacity:.88}}
+#flip{width:min(93vw,960px);align-items:center;justify-content:center;flex-direction:column;gap:12px}.rail-header{font-size:clamp(9px,1.8vw,12px);font-weight:600;letter-spacing:.3em;color:var(--accent);opacity:.7;align-self:stretch;display:flex;justify-content:space-between;padding:0 3px}
+.rail-board{display:flex;align-items:center;justify-content:center;width:100%;gap:clamp(4px,1.35vw,14px);padding:clamp(10px,2vw,20px);background:linear-gradient(155deg,#18191c,#070708 65%,#111214);border:1px solid #34353a;border-radius:clamp(13px,2.5vw,23px);box-shadow:0 0 28px rgba(var(--rgb),.12),0 20px 36px #000c,inset 0 1px 2px #ffffff17}
+.flap-cell{position:relative;flex:1 1 0;max-width:190px;min-width:0;aspect-ratio:.74;perspective:800px;overflow:hidden;border-radius:clamp(5px,1vw,9px);border:1px solid #38383c;box-shadow:inset 0 4px 12px #000e,0 6px 9px #0009;background:#0a0b0d;isolation:isolate}
+.flap-half,.flap-leaf{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-style:preserve-3d;color:var(--accent)}.flap-half.top,.flap-leaf.front{top:0;transform-origin:center bottom;background:linear-gradient(170deg,#2b2b30,#18191c)}.flap-half.bottom,.flap-leaf.back{bottom:0;transform-origin:center top;background:linear-gradient(160deg,#151519,#27272b)}
+.flap-glyph{position:absolute;left:0;width:100%;height:200%;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,sans-serif;font-size:clamp(66px,19vw,215px);font-weight:200;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.065em;text-shadow:0 2px 3px #0009}.top .flap-glyph,.front .flap-glyph{top:0}.bottom .flap-glyph,.back .flap-glyph{top:-100%}
+.flap-cell:after{content:"";position:absolute;inset:calc(50% - 1px) 0 auto;height:2px;z-index:9;background:#050505;box-shadow:0 1px 2px #ffffff24;pointer-events:none}.flap-leaf{visibility:hidden;z-index:6}.flap-leaf.front{z-index:8}.flap-leaf.back{z-index:7;transform:rotateX(91deg)}.flap-cell.flipping .flap-leaf{visibility:visible}.flap-cell.flipping .flap-leaf.front{animation:flapDown .24s cubic-bezier(.52,.07,.83,.72) both}.flap-cell.flipping .flap-leaf.back{animation:flapUp .34s cubic-bezier(.15,.6,.23,1.12) .24s both}
+@keyframes flapDown{from{transform:rotateX(0)}to{transform:rotateX(-91deg)}}@keyframes flapUp{from{transform:rotateX(91deg)}78%{transform:rotateX(-6deg)}to{transform:rotateX(0)}}.rail-colon{flex:0 0 clamp(14px,3vw,31px);font-size:clamp(52px,11vw,128px);font-weight:200;color:var(--accent);text-align:center;line-height:1}
+#context{display:flex;align-items:center;justify-content:center;gap:6px 18px;flex-wrap:wrap;max-width:95vw;text-align:center;color:var(--accent);filter:brightness(var(--bright));opacity:calc(1 - var(--dim));transform:translate(var(--shift-x),var(--shift-y));transition:opacity 280ms,transform 2s ease}
+#date{font-size:clamp(17px,3.6vw,25px);font-weight:400;text-transform:capitalize;letter-spacing:.008em}#weatherLine{display:flex;gap:7px;align-items:center;font-size:clamp(16px,3.6vw,24px);font-weight:400}#weatherIcon{width:25px;height:25px;display:inline-flex}#weatherIcon svg{width:100%;height:100%;color:var(--accent)}
+#weatherIcon.sun svg{animation:weatherSun 22s linear infinite}
+#weatherIcon.cloud svg{animation:weatherCloud 5s ease-in-out infinite}
+#weatherIcon.rain svg,#weatherIcon.snow svg{animation:weatherCloud 3s ease-in-out infinite}
+@keyframes weatherSun{to{transform:rotate(360deg)}}
+@keyframes weatherCloud{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}#city{font-size:clamp(13px,2.5vw,17px);font-weight:400;opacity:.7}body.minimal #context{opacity:0;pointer-events:none}
+#moonWidget{position:absolute;top:calc(16px + env(safe-area-inset-top));right:calc(20px + env(safe-area-inset-right));opacity:0;transition:opacity 300ms;color:var(--accent)}body.ambient #moonWidget{opacity:.6}#moonWidget svg{width:36px;height:36px}
+#intensityHud{position:fixed;left:50%;top:calc(28px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-8px);display:flex;align-items:center;gap:10px;color:#fff;background:#202126e8;border:1px solid #ffffff21;border-radius:28px;padding:9px 15px;opacity:0;pointer-events:none;transition:opacity 250ms,transform 250ms;z-index:30;font-size:13px}#intensityHud.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Bottom sheet — glass effect is limited to controls, keeping OLED clock pure. */
+#scrim{position:fixed;inset:0;background:#000a;opacity:0;pointer-events:none;transition:opacity 280ms;z-index:39}#scrim.visible{opacity:1;pointer-events:auto}
+#sheet{position:fixed;z-index:40;left:0;bottom:0;width:100%;max-height:min(88dvh,790px);display:flex;flex-direction:column;transform:translateY(calc(100% + 5px));transition:transform 340ms cubic-bezier(.24,.7,.22,1);background:var(--panel);backdrop-filter:blur(30px) saturate(120%);-webkit-backdrop-filter:blur(30px) saturate(120%);border-top:1px solid #ffffff2b;border-radius:26px 26px 0 0;box-shadow:0 -18px 50px #0009;padding-bottom:env(safe-area-inset-bottom)}#sheet.open{transform:translateY(0)}
+.sheet-grab{height:5px;width:40px;border-radius:5px;background:#ffffff47;align-self:center;margin:10px 0 15px}.sheet-head{display:flex;justify-content:space-between;align-items:center;padding:0 22px 14px}.sheet-head strong{font-size:19px;letter-spacing:-.02em;font-weight:600}.ghost{border:1px solid #ffffff25;background:#ffffff0d;color:var(--fg);padding:10px 14px;border-radius:13px;font-size:12px}.ghost:active,.theme-btn:active,.chip:active{transform:scale(.97)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 17px 12px;border-bottom:1px solid #ffffff14}.tab{padding:11px 3px;font-size:12px;background:none;color:var(--muted);border:0;border-radius:11px;transition:background 240ms,color 240ms}.tab[aria-selected="true"]{background:rgba(var(--rgb),.16);color:var(--accent);font-weight:650}
+.tab-panel{display:none;overflow-y:auto;overscroll-behavior:contain;padding:18px 22px 25px;min-height:130px}.tab-panel.active{display:block}.section-title{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 0 13px}.section-title:first-child{margin-top:0}
+.field{display:flex;justify-content:space-between;align-items:center;gap:15px;min-height:52px;border-bottom:1px solid #ffffff0e;padding:9px 0}.field span{font-size:13px;line-height:1.4}.field small{display:block;font-size:11px;color:var(--muted);margin-top:3px;max-width:220px}.field input[type=range]{width:min(42%,165px);accent-color:var(--accent)}.field input[type=time],.field select{max-width:160px;min-height:38px;background:#22232a;border:1px solid #ffffff27;border-radius:10px;color:#fff;padding:6px 9px;color-scheme:dark}.field input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.color-row{display:flex;align-items:center;flex-wrap:wrap;gap:11px;margin:9px 0 15px}.chip{height:30px;width:30px;border-radius:50%;border:2px solid #ffffff1b;background:var(--chip);padding:0;transition:transform 160ms}.chip[aria-pressed="true"]{outline:2px solid #fff;outline-offset:3px}.color-picker{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted)}.color-picker input{width:45px;height:36px;padding:2px;background:none;border:1px solid #ffffff28;border-radius:8px}
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.theme-btn{border:1px solid #ffffff1b;min-height:58px;text-align:left;background:#ffffff08;color:#fff;border-radius:13px;padding:13px;display:flex;align-items:center;gap:10px;transition:transform 150ms,border-color 180ms}.theme-btn i{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--preset);box-shadow:0 0 9px var(--preset)}.theme-btn[aria-pressed="true"]{border-color:var(--accent)}
+.status{font-size:12px;color:var(--muted);line-height:1.5;padding:10px 0}.status.error{color:#f4a29b}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.action-primary{background:var(--accent);color:#000;font-weight:650;border:0;border-radius:12px;padding:12px 16px;min-height:42px}.action-secondary{border:1px solid #ffffff26;background:#ffffff10;color:#fff;border-radius:12px;padding:12px 16px;min-height:42px}
+/* First-launch onboarding. Each page is a distinct, accessible step. */
+#onboard{position:fixed;inset:0;z-index:70;background:#000;display:flex;align-items:center;justify-content:center;padding:calc(30px + env(safe-area-inset-top)) 26px calc(30px + env(safe-area-inset-bottom))}#onboard[hidden]{display:none}.onboard-card{width:min(100%,400px);text-align:center}.onboard-art{height:140px;display:grid;place-items:center;color:var(--accent);font-size:70px;font-weight:200;letter-spacing:-.08em}.onboard-card h1{font-size:28px;font-weight:400;letter-spacing:-.04em;margin:10px 0}.onboard-card p{color:var(--muted);font-size:15px;line-height:1.6;min-height:90px}.dots{display:flex;justify-content:center;gap:7px;margin:20px 0 28px}.dots i{display:block;width:7px;height:7px;border-radius:8px;background:#555}.dots i.current{width:22px;background:var(--accent)}
+#splash{position:fixed;inset:0;display:grid;place-items:center;background:#000;z-index:65;opacity:1;transition:opacity 400ms;pointer-events:none}
+#splash span{font-size:31px;font-weight:250;letter-spacing:.23em;color:var(--accent);text-shadow:0 0 18px rgba(var(--rgb),.22)}
+#splash.done{opacity:0}
+#toast{position:fixed;z-index:80;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-10px);width:max-content;max-width:90vw;color:#fff;background:#22252bea;padding:11px 14px;border:1px solid #ffffff27;border-radius:14px;font-size:12px;opacity:0;pointer-events:none;transition:opacity 250ms,transform 250ms;text-align:center}#toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+#alarmControls{position:fixed;z-index:60;inset:auto 16px calc(25px + env(safe-area-inset-bottom));display:none;justify-content:center;gap:12px}body.alarming #alarmControls{display:flex}#alarmControls button{min-width:130px;border-radius:16px;min-height:55px;font-size:16px;font-weight:650}#stopAlarm{color:#fff;background:#692c2c;border:1px solid #ad4545}#snoozeAlarm{color:#000;background:var(--accent);border:0}
+@media(orientation:landscape){#analog{width:min(68dvh,58vw,580px)}#clockStage{gap:9px}#numeric .num-pair{font-size:min(25vw,64dvh)}#numeric .breath{font-size:min(21vw,54dvh)}#flip{width:min(88vw,1040px);gap:6px}.rail-board{padding:8px 12px}.flap-cell{aspect-ratio:1.05}.flap-glyph{font-size:clamp(50px,38dvh,190px)}#context{font-size:16px}.tab-panel{padding:13px 20px 20px}#sheet{max-height:96dvh}}
+@media(max-width:345px){.flap-glyph{font-size:17vw}.rail-header{letter-spacing:.13em}.sheet-head{padding:0 14px 10px}.tab-panel{padding:14px 14px}.field span{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body data-mode="analog">
+  <div id="splash" aria-hidden="true"><span>NIGHTDIAL</span></div>
+  <div id="sky" aria-hidden="true"></div><div id="sunriseLayer" aria-hidden="true"></div>
+  <div id="moonWidget" aria-hidden="true"><svg viewBox="0 0 40 40"><defs><mask id="moonMask"><rect width="40" height="40" fill="black"/><circle cx="20" cy="20" r="14" fill="white"/><ellipse id="moonShade" cx="18" cy="20" rx="14" ry="14" fill="black"/></mask></defs><circle cx="20" cy="20" r="14" fill="currentColor" mask="url(#moonMask)"/></svg></div>
+  <main id="clockStage" tabindex="0" role="application" aria-label="NightDial. Balayer horizontalement pour changer l'horloge, verticalement pour ajuster la luminosité. Double toucher pour le mode nuit. Toucher pour ouvrir les réglages.">
+    <div id="clockVisual">
+      <div id="analog" class="mode" aria-label="Horloge analogique"><svg viewBox="0 0 400 400" role="img" aria-label="Cadran suisse"><circle class="clock-rim" cx="200" cy="200" r="196"/><g id="ticks"></g><g id="hours"></g><line class="hand hour-hand" id="handHour" x1="200" y1="213" x2="200" y2="113"/><line class="hand minute-hand" id="handMinute" x1="200" y1="218" x2="200" y2="66"/><line class="hand second-hand" id="handSecond" x1="200" y1="236" x2="200" y2="55"/><circle class="hub" cx="200" cy="200" r="5"/></svg></div>
+      <div id="numeric" class="mode" role="timer" aria-live="off" aria-label="Horloge numérique"><div class="num-pair" id="numHours"><span class="num-digit">0</span><span class="num-digit">0</span></div><span class="breath" aria-hidden="true">:</span><div class="num-pair" id="numMinutes"><span class="num-digit">0</span><span class="num-digit">0</span></div></div>
+      <div id="flip" class="mode" role="timer" aria-live="off" aria-label="Horloge à volets de gare"><div class="rail-header"><span>NIGHTDIAL</span><span>STATION CLOCK</span></div><div class="rail-board" id="railBoard"></div></div>
+    </div>
+    <div id="context" aria-label="Date et météo"><span id="date"></span><span id="weatherLine" hidden><span id="weatherIcon"></span><span id="temperature"></span><span id="city"></span></span></div>
+  </main>
+  <div id="intensityHud" role="status" aria-live="polite">☀ <span id="intensityLabel">60 %</span></div>
+  <div id="scrim" aria-hidden="true"></div>
+  <section id="sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true" inert>
+    <div class="sheet-grab" aria-hidden="true"></div><div class="sheet-head"><strong id="settingsTitle">Personnalisation</strong><button id="closeSheet" class="ghost" aria-label="Fermer les réglages">Terminé</button></div>
+    <div class="tabs" role="tablist" aria-label="Catégories des réglages"><button class="tab" role="tab" id="tab-style" aria-controls="pane-style" aria-selected="true" data-tab="style">Style</button><button class="tab" role="tab" id="tab-night" aria-controls="pane-night" aria-selected="false" data-tab="night">Nuit</button><button class="tab" role="tab" id="tab-alarm" aria-controls="pane-alarm" aria-selected="false" data-tab="alarm">Réveil</button><button class="tab" role="tab" id="tab-advanced" aria-controls="pane-advanced" aria-selected="false" data-tab="advanced">Avancé</button></div>
+    <section class="tab-panel active" id="pane-style" role="tabpanel" aria-labelledby="tab-style">
+      <p class="section-title">Cadran</p><div class="theme-grid"><button class="theme-btn" data-mode="analog">◷ &nbsp;Analogique</button><button class="theme-btn" data-mode="numeric">▣ &nbsp;Numérique</button><button class="theme-btn" data-mode="flip">▤ &nbsp;Gare / Flip</button></div>
+      <p class="section-title">Couleur d'accent</p><div id="colorSwatches" class="color-row" role="group" aria-label="Palette de couleurs"></div><label class="color-picker" for="customColor">Couleur personnalisée <input type="color" id="customColor" value="#d2554d"></label>
+      <p class="section-title">Thèmes</p><div class="theme-grid"><button class="theme-btn" data-theme="station" style="--preset:#e8e8ee"><i></i>Gare</button><button class="theme-btn" data-theme="amber" style="--preset:#db8b43"><i></i>Ambre nuit</button><button class="theme-btn" data-theme="astronomy" style="--preset:#c63837"><i></i>Rouge astronome</button><button class="theme-btn" data-theme="minimal" style="--preset:#c4c9ce"><i></i>Minimal</button></div>
+      <div class="field"><span>Intensité visuelle</span><input id="bright" type="range" min="5" max="100" step="1" aria-label="Intensité visuelle"></div><div class="field"><span>Atténuation</span><input id="dim" type="range" min="0" max="95" step="1" aria-label="Atténuation"></div>
+    </section>
+    <section class="tab-panel" id="pane-night" role="tabpanel" aria-labelledby="tab-night" hidden>
+      <p class="section-title">Confort nocturne</p>
+      <div class="field"><span>Nuit automatique<small>Atténuation selon l'heure locale</small></span><input aria-label="Nuit automatique" id="smartNight" type="checkbox"></div>
+      <div class="field"><span>Début</span><input aria-label="Début" id="nightStart" type="time"></div><div class="field"><span>Fin</span><input aria-label="Fin" id="nightEnd" type="time"></div>
+      <div class="field"><span>Atténuation nocturne</span><input aria-label="Atténuation nocturne" id="nightDim" type="range" min="25" max="95" step="5"></div>
+      <div class="field"><span>Masquer date et météo</span><input aria-label="Masquer date et météo" id="nightMinimal" type="checkbox"></div>
+      <div class="field"><span>Rouge profond<small>Confort visuel dans l'obscurité</small></span><input aria-label="Rouge profond" id="deepRed" type="checkbox"></div>
+      <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
+      <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
+    </section>
+    <section class="tab-panel" id="pane-alarm" role="tabpanel" aria-labelledby="tab-alarm">
+      <p class="section-title">Réveil progressif</p>
+      <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div><div class="field"><span>Heure du réveil</span><input aria-label="Heure du réveil" id="wakeTime" type="time"></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+      <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
+      <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
+      <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
+      <div class="actions"><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio">Tester le son</button></div>
+      <p class="status">Le réveil sonore Web Audio n'est pas fiable lorsque Safari est fermé, l'écran verrouillé ou l'app suspendue. Utilise toujours l'alarme native iOS pour les rendez-vous importants.</p>
+    </section>
+    <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
+      <p class="section-title">Affichage et énergie</p>
+      <div class="field"><span>Protection OLED<small>Déplacement subtil toutes les 2 min</small></span><input aria-label="Protection OLED" id="oledShift" type="checkbox"></div>
+      <div class="field"><span>Trotteuse fluide<small>Animation réduite si désactivée</small></span><input aria-label="Trotteuse fluide" id="seconds" type="checkbox"></div>
+      <div class="field"><span>Animation des volets</span><input aria-label="Animation des volets" id="flipPro" type="checkbox"></div>
+      <div class="field"><span>Clic mécanique<small>Audio après interaction</small></span><input aria-label="Clic mécanique" id="flipSound" type="checkbox"></div>
+      <div class="field"><span>Afficher météo et ville</span><input aria-label="Afficher météo et ville" id="showWeather" type="checkbox"></div>
+      <div class="field"><span>Garder l'écran éveillé<small>Selon les capacités d'iOS</small></span><input aria-label="Garder l&#x27;écran éveillé" id="wake" type="checkbox"></div>
+      <div class="actions"><button id="demoFlap" class="action-secondary">Tester les volets</button><button id="refreshWeather" class="action-secondary">Actualiser météo</button></div>
+      <p id="weatherStatus" class="status" role="status"></p><p id="wakeStatus" class="status" role="status"></p>
+      <p class="section-title">Informations</p><p class="status">NightDial Premium • Vanilla JS • Hors ligne avec le service worker du dépôt GitHub • Préférences sur cet appareil.</p>
+      <div class="actions"><button class="action-secondary" id="restartTour">Revoir le guide</button></div>
+    </section>
+  </section>
+  <div id="alarmControls"><button id="snoozeAlarm">Reporter</button><button id="stopAlarm">Arrêter</button></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="onboard" aria-label="Bienvenue dans NightDial" role="dialog" aria-modal="true" hidden>
+    <div class="onboard-card"><div class="onboard-art" id="tourArt" aria-hidden="true">12:48</div><h1 id="tourTitle">NightDial</h1><p id="tourText"></p><div class="dots" id="tourDots"></div><button id="tourNext" class="action-primary">Continuer</button><button id="tourSkip" class="ghost" style="margin-left:10px">Passer</button></div>
   </div>
-</details>
-<div class="footer"><span>Portrait + paysage • Mode nuit OLED<br>Toucher l'horloge pour afficher les réglages.</span><button id="hide">Masquer</button></div></section><script src="app.js" defer></script></body></html>
+<script>
+'use strict';
+/* --------------------------------------------------------------------------
+  NightDial Premium: self-contained application code.
+  State key deliberately kept as nightdial-v1 to preserve existing settings.
+  PWA service-worker/manifest assets remain separate existing repo files:
+  GitHub Pages browsers require a same-origin URL for service-worker scripts.
+  -------------------------------------------------------------------------- */
+const $=id=>document.getElementById(id);
+const root=document.documentElement;
+const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
+const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false};
+let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
+const state={...defaults,...saved};
+// Migration: palette names used in older versions are still recognized.
+const accent=()=>palettes[state.color]||(/#[0-9a-f]{6}$/i.test(state.color||'')?state.color:palettes.red);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
+const setVar=(a,b)=>root.style.setProperty(a,b);
+const minuteOfDay=value=>{const m=/^(\d{2}):(\d{2})$/.exec(value||'');return m&&+m[1]<24&&+m[2]<60?+m[1]*60 + +m[2]:null};
+const inSchedule=(now,start,end)=>start!==null&&end!==null&&start!==end&&(start<end?(now>=start&&now<end):(now>=start||now<end));
+const todayKey=d=>[d.getFullYear(),d.getMonth()+1,d.getDate()].join('-');
+const timeLabel=d=>String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0');
+function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state))}catch{}}
+let toastTimer,hudTimer;
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
+function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function render(){document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateAdaptive();persist();syncClockLoop()}
+// Analog Swiss-station dial; all marks and numerals are generated once.
+const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
+for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
+for(let i=1;i<=12;i++){const a=i*Math.PI/6-Math.PI/2;const t=svg('text',{x:200+147*Math.cos(a),y:200+147*Math.sin(a),class:'clock-hour'});t.textContent=String(i);$('hours').append(t)}
+// Premium rail flaps: each glyph is clipped to the upper/lower half.
+const cells=[];let lastFlip='';let demoInProgress=false;
+function makeCell(){const cell=document.createElement('div');cell.className='flap-cell';cell.innerHTML='<div class="flap-half top"><span class="flap-glyph">0</span></div><div class="flap-half bottom"><span class="flap-glyph">0</span></div><div class="flap-leaf front"><span class="flap-glyph">0</span></div><div class="flap-leaf back"><span class="flap-glyph">0</span></div>';const q=s=>cell.querySelector(s);$('railBoard').append(cell);return {el:cell,top:q('.top .flap-glyph'),bottom:q('.bottom .flap-glyph'),front:q('.front .flap-glyph'),back:q('.back .flap-glyph'),value:'0',token:0,delay:null,finish:null}}
+for(let i=0;i<4;i++){if(i===2){const colon=document.createElement('span');colon.className='rail-colon';colon.textContent=':';$('railBoard').append(colon)}cells.push(makeCell())}
+const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function settle(c,value){clearTimeout(c.delay);clearTimeout(c.finish);c.token++;c.value=value;for(const p of [c.top,c.bottom,c.front,c.back])p.textContent=value;c.el.classList.remove('flipping')}
+function flipCell(c,value,delay){if(value===c.value)return;clearTimeout(c.delay);clearTimeout(c.finish);c.token++;const token=c.token;c.delay=setTimeout(()=>{if(c.token!==token)return;const old=c.value;c.value=value;c.top.textContent=value;c.bottom.textContent=old;c.front.textContent=old;c.back.textContent=value;c.el.classList.remove('flipping');void c.el.offsetWidth;c.el.classList.add('flipping');if(state.flipSound)playClick();c.finish=setTimeout(()=>{if(c.token===token)settle(c,value)},660)},delay)}
+function setFlaps(value,{force=false}={}){if(!/^\d{4}$/.test(value)||(!force&&lastFlip===value))return;const first=lastFlip==='';lastFlip=value;const animate=!first&&state.flipPro&&state.mode==='flip'&&!reducedMotion()&&document.visibilityState==='visible';cells.forEach((c,i)=>{const digit=value[i];if(!animate)settle(c,digit);else if(digit!==c.value)flipCell(c,digit,i*72)})}
+// Numeric mode animates only changed digits; an inert initial paint is cheap.
+let previousNumeric='';function setNumeric(value){if(value===previousNumeric)return;const nodes=[...document.querySelectorAll('.num-digit')];nodes.forEach((node,i)=>{if(node.textContent!==value[i]){node.textContent=value[i];if(previousNumeric&&!reducedMotion()){node.classList.remove('changed');void node.offsetWidth;node.classList.add('changed')}}});previousNumeric=value}
+let lastClockMinute=-1,clockTimeout,frameId=0,nightActive=false,temporarySunriseUntil=0,lastOledStep=-1;
+function updateAdaptive(now=new Date()){
+ const m=now.getHours()*60+now.getMinutes();nightActive=!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
+ const baseline=clamp(state.dim,0,95)/100;let dim=nightActive?Math.max(baseline,clamp(state.nightDim,25,95)/100):baseline;
+ const wake=minuteOfDay(state.wakeTime),duration=clamp(state.sunriseDuration,15,60);let sunlight=0;
+ if(state.sunrise&&wake!==null){const before=(wake-m+1440)%1440,after=(m-wake+1440)%1440;if(before<=duration)sunlight=1-before/duration;else if(after<=10)sunlight=1}
+ if(Date.now()<temporarySunriseUntil)sunlight=1;
+ if(sunlight)dim=dim*(1-sunlight)+Math.min(baseline,.10)*sunlight;
+ setVar('--bright',(clamp(state.bright,5,100)/100).toFixed(3));setVar('--dim',clamp(dim,0,.95).toFixed(3));setVar('--sunrise',(sunlight*.88).toFixed(3));setVar('--sunrise-daylight',Math.pow(sunlight,3).toFixed(3));
+ document.body.classList.toggle('minimal',((!!state.nightMinimal&&nightActive)||state.theme==='minimal')&&!sunlight&&!sheetOpen);
+ if(state.deepRed){const color=nightActive?'#aa1d20':accent();if(root.style.getPropertyValue('--accent')!==color){setVar('--accent',color);setVar('--rgb',color.match(/[a-f\d]{2}/gi).map(x=>parseInt(x,16)).join(','))}}
+ const step=state.oledShift&&document.visibilityState==='visible'?Math.floor(now.getTime()/120000):-1;if(step!==lastOledStep){lastOledStep=step;const positions=[[0,0],[2,-2],[-1,2],[-2,-1],[1,1]];const [x,y]=step<0?[0,0]:positions[step%positions.length];setVar('--shift-x',x+'px');setVar('--shift-y',y+'px')}
+}
+function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),mins=now.getMinutes(),secs=now.getSeconds()+now.getMilliseconds()/1000;const hr=hours%12+mins/60+secs/3600,mn=mins+secs/60;const paused=secs<.42?0:(secs-.42)*60/59.58;
+ // Calculate endpoints directly: Safari can otherwise double-apply SVG/CSS transform origins.
+ const pointHand=(id,degrees,tail,length)=>{const a=degrees*Math.PI/180,s=Math.sin(a),c=Math.cos(a),hand=$(id);hand.setAttribute('x1',200-tail*s);hand.setAttribute('y1',200+tail*c);hand.setAttribute('x2',200+length*s);hand.setAttribute('y2',200-length*c)};
+ pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
+ const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
+ setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
+ const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now)}
+}
+function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
+function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
+function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&state.mode==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
+// User gesture controls: pointer events prevent synthetic touch-click conflicts.
+let sheetOpen=false,gesture=null,lastTap=0,tapTimer;
+function setSheet(open){sheetOpen=open;$('sheet').classList.toggle('open',open);$('sheet').setAttribute('aria-hidden',String(!open));$('sheet').inert=!open;$('scrim').classList.toggle('visible',open);$('scrim').setAttribute('aria-hidden',String(!open));updateAdaptive();if(open){syncControls();$('closeSheet').focus()}else $('clockStage').focus({preventScroll:true})}
+function changeMode(direction){const modes=['analog','numeric','flip'];const i=Math.max(0,modes.indexOf(state.mode));state.mode=modes[(i+direction+3)%3];render();toast(({analog:'Analogique',numeric:'Numérique',flip:'Gare'})[state.mode])}
+function toggleNight(){state.manualNight=!state.manualNight;render();toast(state.manualNight?'Mode nuit manuel':'Mode nuit automatique')}
+$('clockStage').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;gesture={x:e.clientX,y:e.clientY,id:e.pointerId};});
+$('clockStage').addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)return;const start=gesture;gesture=null;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.max(Math.abs(dx),Math.abs(dy))>44){clearTimeout(tapTimer);if(Math.abs(dx)>Math.abs(dy)*1.25){changeMode(dx<0?1:-1)}else if(Math.abs(dy)>Math.abs(dx)*1.25){state.bright=clamp(Number(state.bright)-dy/3,5,100);render();showHud()}return}
+ const n=Date.now();if(n-lastTap<300){clearTimeout(tapTimer);lastTap=0;toggleNight()}else{lastTap=n;tapTimer=setTimeout(()=>{lastTap=0;setSheet(true)},310)} });
+$('clockStage').addEventListener('pointercancel',()=>gesture=null);
+$('clockStage').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();changeMode(e.key==='ArrowLeft'?1:-1)}else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();state.bright=clamp(Number(state.bright)+(e.key==='ArrowUp'?5:-5),5,100);render();showHud()}else if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(true)}else if(e.key==='n'||e.key==='N'){toggleNight()}});
+$('scrim').addEventListener('click',()=>setSheet(false));$('closeSheet').addEventListener('click',()=>setSheet(false));document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheetOpen)setSheet(false)});
+// Keep Tab navigation inside the open modal without trapping non-modal keyboard use.
+$('sheet').addEventListener('keydown',e=>{if(!sheetOpen||e.key!=='Tab')return;const visible=[...$('sheet').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled])')].filter(el=>el.getClientRects().length&&el.tabIndex!==-1);if(!visible.length)return;const first=visible[0],last=visible[visible.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
+const tabs=[...document.querySelectorAll('.tab')];function activateTab(name){tabs.forEach(t=>{const active=t.dataset.tab===name;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1});document.querySelectorAll('.tab-panel').forEach(p=>{const active=p.id==='pane-'+name;p.classList.toggle('active',active);p.hidden=!active})}
+tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const i=tabs.indexOf(t),n=(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activateTab(tabs[n].dataset.tab);tabs[n].focus()})});
+// Palette, color wheel and presets.
+for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
+$('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
+document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
+for(const id of ['bright','dim','nightDim','alarmVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio()});
+// Optional star field: seeded static positions (no high-frequency animation).
+let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
+// Astronomical approximation for a subtle moon phase shape; not intended for navigation.
+function updateMoon(){const cycle=29.530588853,anchor=Date.UTC(2000,0,6,18,14);const age=((Date.now()-anchor)/86400000%cycle+cycle)%cycle;const phase=age/cycle;const rx=Math.max(1,Math.abs(Math.cos(phase*Math.PI*2))*14);$('moonShade').setAttribute('rx',rx);$('moonShade').setAttribute('cx',phase<.5?15:25)}updateMoon();
+// Inline SVG weather icons; no external icon library or animation loop.
+function weatherSVG(code,isDay){const stroke='stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"';let s='';if(code===0||code===1){s=isDay?'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>':'<path d="M19 16A8 8 0 0 1 8 5 8 8 0 1 0 19 16Z"/>'}else if(code<=3){s='<path d="M6 18h11a4 4 0 0 0 .3-8 6 6 0 0 0-11.4 1A3.5 3.5 0 0 0 6 18Z"/>'}else if(code<70){s='<path d="M6 14h11a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 6 14Zm3 4-1 3m6-3-1 3m6-3-1 3"/>'}else if(code<90){s='<path d="M5 14h13a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 5 14Zm7 3v5m-3-2h6m-5-3 4 5m0-5-4 5"/>'}else{s='<path d="M6 15h11a4 4 0 0 0 0-8 6 6 0 0 0-11 3A3 3 0 0 0 6 15Zm7 1-3 4h3l-2 3"/>'}return '<svg viewBox="0 0 24 24" aria-hidden="true"><g '+stroke+'>'+s+'</g></svg>'}
+let weatherInfo=null,weatherBusy=false,weatherAt=0,cityCache=null;
+try{cityCache=JSON.parse(localStorage.getItem('nightdial-city-v1')||'null')}catch{}
+async function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(Error('Localisation indisponible'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:11000,maximumAge:0})})}
+async function lookupCity(lat,lon){if(cityCache&&Date.now()-cityCache.at<86400000&&Math.abs(cityCache.lat-lat)<.04&&Math.abs(cityCache.lon-lon)<.04)return cityCache.name;try{const url='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&localityLanguage=fr';const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('Ville introuvable');const data=await res.json();const name=String(data.city||data.locality||'').trim().slice(0,70);if(name){cityCache={name,lat,lon,at:Date.now()};try{localStorage.setItem('nightdial-city-v1',JSON.stringify(cityCache))}catch{}}return name}catch{return ''}}
+function drawWeather(){if(!weatherInfo){$('weatherLine').hidden=true;return}$('weatherLine').hidden=!state.showWeather;$('weatherIcon').innerHTML=weatherSVG(weatherInfo.code,weatherInfo.day);$('weatherIcon').className=weatherInfo.code<=1?'sun':weatherInfo.code<=3?'cloud':weatherInfo.code<70?'rain':weatherInfo.code<90?'snow':'storm';$('temperature').textContent=Math.round(weatherInfo.temp)+'°C';$('city').textContent=weatherInfo.city?'· '+weatherInfo.city:''}
+async function updateWeather(force=false){if(weatherBusy||!state.showWeather||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent='Météo hors ligne : dernière donnée conservée.';return}weatherBusy=true;$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();drawWeather();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.')}finally{weatherBusy=false}}
+$('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
+// Web Audio: sound is created by oscillators, gated behind a user gesture.
+let audioCtx=null,alarmTimer=null,alarmGain=null,alarmStarted=0,alarmActive=false,snoozeUntil=0,lastAlarmDay='',previewAudioTimer=null;
+async function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw Error('Audio non disponible');audioCtx=audioCtx||new AC();if(audioCtx.state==='suspended')await audioCtx.resume();return audioCtx.state==='running'}catch{toast('Audio non disponible : utilise l’alarme iPhone.');return false}}
+function playTone(freq=520,seconds=.14,volume=.04){if(!audioCtx||audioCtx.state!=='running')return;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),t=audioCtx.currentTime;osc.type='sine';osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.016);gain.gain.exponentialRampToValueAtTime(.0001,t+seconds);osc.connect(gain).connect(audioCtx.destination);osc.start(t);osc.stop(t+seconds+.02)}
+function playClick(){if(!state.flipSound||!audioCtx)return;playTone(390,.055,.014)}
+function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()-alarmStarted)/120000),level=(.018+.12*growth)*clamp(state.alarmVolume,5,80)/80;playTone(490+growth*130,.5,level)}
+async function startAlarm(){if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;if(!await unlockAudio())return;alarmActive=true;alarmStarted=Date.now();document.body.classList.add('alarming');alarmPulse();alarmTimer=setInterval(alarmPulse,1550);toast('Réveil NightDial');}
+function stopAlarm(){alarmActive=false;clearInterval(alarmTimer);alarmTimer=null;document.body.classList.remove('alarming')}
+function checkAlarm(now){if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;if(snoozeUntil){if(now.getTime()>=snoozeUntil){snoozeUntil=0;startAlarm()}return}const wanted=minuteOfDay(state.wakeTime),current=now.getHours()*60+now.getMinutes(),day=todayKey(now);if(wanted===current&&day!==lastAlarmDay){lastAlarmDay=day;startAlarm()}}
+$('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;toast('Rappel dans '+state.snoozeMinutes+' min')});
+$('testAudio').addEventListener('click',async()=>{if(!await unlockAudio())return;playTone(520,.4,.07);clearTimeout(previewAudioTimer);previewAudioTimer=setTimeout(()=>playTone(660,.5,.08),500)});
+$('previewSunrise').addEventListener('click',()=>{temporarySunriseUntil=Date.now()+8000;updateAdaptive();toast('Aperçu du lever de soleil · 8 s');setTimeout(updateAdaptive,8100)});
+// Keep-screen-awake is best effort only on supporting browsers; never promise iOS behavior.
+let wakeLock=null;async function manageWake(){if(wakeLock&&!state.wake){try{await wakeLock.release()}catch{}wakeLock=null}if(!state.wake){$('wakeStatus').textContent='Maintien d’écran désactivé.';return}if(!('wakeLock' in navigator)){$('wakeStatus').textContent='Maintien d’écran non pris en charge sur ce navigateur.';return}if(document.visibilityState!=='visible')return;try{if(!wakeLock||wakeLock.released)wakeLock=await navigator.wakeLock.request('screen');$('wakeStatus').textContent='Maintien d’écran actif (selon iOS).'}catch{$('wakeStatus').textContent='Impossible de maintenir l’écran éveillé (restrictions iOS).'}}
+document.addEventListener('visibilitychange',()=>{syncClockLoop();if(document.visibilityState==='visible'){updateWeather();manageWake()}else stopAlarm()});window.addEventListener('pageshow',()=>{syncClockLoop();manageWake()});document.addEventListener('pointerdown',()=>{if(state.wake&&!wakeLock)manageWake()},{passive:true});
+// Split-flap demonstration changes the next minute, then returns to actual time.
+$('demoFlap').addEventListener('click',()=>{if(reducedMotion()){toast('Désactive Réduire les animations pour voir les volets.');return}state.mode='flip';state.flipPro=true;render();setSheet(false);const t=new Date(Date.now()+61000);const target=timeLabel(t);demoInProgress=true;setFlaps(target,{force:true});setTimeout(()=>{demoInProgress=false;setFlaps(timeLabel(new Date()),{force:true})},1500)});
+// Three onboarding screens, stored separately to preserve v1 settings.
+const tour=[{art:'12:48',title:'Bienvenue dans NightDial',text:'Une horloge de chevet OLED sans distractions. Trois cadrans, une seule couleur, un design pensé pour la nuit.'},{art:'↔  ↕',title:'Des gestes naturels',text:'Balaye à gauche ou à droite pour changer de cadran, verticalement pour ajuster la lumière, double-tape pour basculer en mode nuit.'},{art:'▤',title:'Ton réveil, ton rythme',text:'Touche l’horloge pour ouvrir les réglages. Dans Safari, utilise Partager → Ajouter à l’écran d’accueil pour installer NightDial.'}];let tourStep=0;
+function drawTour(){const p=tour[tourStep];$('tourArt').textContent=p.art;$('tourTitle').textContent=p.title;$('tourText').textContent=p.text;$('tourDots').innerHTML=tour.map((_,i)=>'<i class="'+(i===tourStep?'current':'')+'"></i>').join('');$('tourNext').textContent=tourStep===tour.length-1?'Commencer':'Continuer'}
+function showTour(){tourStep=0;drawTour();$('onboard').hidden=false;$('tourNext').focus()}
+function endTour(){localStorage.setItem('nightdial-onboard-v1','done');$('onboard').hidden=true;$('clockStage').focus({preventScroll:true});if(!window.matchMedia('(display-mode: standalone)').matches&&!navigator.standalone)toast('Astuce : Safari → Partager → Ajouter à l’écran d’accueil')}
+$('tourNext').addEventListener('click',()=>{if(tourStep>=tour.length-1)endTour();else{tourStep++;drawTour()}});$('tourSkip').addEventListener('click',endTour);$('restartTour').addEventListener('click',()=>{setSheet(false);showTour()});
+// Startup: no app-wide API calls or third-party scripts required to display time.
+render();drawWeather();syncClockLoop();manageWake();updateWeather();setTimeout(()=>{$('splash').classList.add('done');setTimeout(()=>$('splash').remove(),450)},480);if(!localStorage.getItem('nightdial-onboard-v1'))showTour();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{$('wakeStatus').textContent='Mode hors ligne indisponible (service worker non chargé).'});
+</script>
+</body>
+</html>
