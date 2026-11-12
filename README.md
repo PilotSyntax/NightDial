@@ -2,6 +2,13 @@
 
 Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript sans compte Apple Developer.
 
+## v28 : nouvelle interface
+
+- **Identité** : emblème NightDial (cadran et croissant), écran de lancement et guide de bienvenue redessinés.
+- **Écran principal** : halo discret à la couleur d’accent, carte **Routine du soir** avec l’heure du prochain réveil et bouton principal. La carte s’efface pendant la routine.
+- **Réglages** : onglets avec icônes, groupes en cartes, interrupteurs, curseurs avec remplissage, aperçus des trois cadrans, section **À propos**.
+- Toute l’interface suit la couleur d’accent choisie. Aucune fonction retirée, préférences `nightdial-v1` conservées, cache `nightdial-premium-v28`.
+
 ## v27 — Chevet ambre et routine du soir
 
 - Le cadran numérique **Chevet ambre** s’affiche par défaut lors d’une nouvelle installation. Le cadran **Gare de nuit** conserve ses volets mécaniques. Les préférences d’affichage déjà enregistrées sont reprises.

@@ -1,4 +1,4 @@
-const CACHE = 'nightdial-premium-v27';
+const CACHE = 'nightdial-premium-v28';
 const THETA_CACHE = 'nightdial-theta-v1';
 const scope = new URL(self.registration.scope);
 const index = new URL('index.html', scope);

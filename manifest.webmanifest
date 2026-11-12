@@ -1,12 +1,16 @@
 {
-  "name": "NightDial — Horloge de nuit",
+  "id": "./",
+  "name": "NightDial · Horloge de chevet",
   "short_name": "NightDial",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "description": "Horloge nocturne analogique et numérique",
+  "description": "Horloge de chevet pour écran OLED : cadrans de nuit, routine du soir, ambiances sonores et réveil lumineux progressif.",
+  "lang": "fr-CA",
+  "dir": "ltr",
+  "categories": ["lifestyle", "health", "utilities"],
   "icons": [
     {
       "src": "icon-512.png?v=12",
