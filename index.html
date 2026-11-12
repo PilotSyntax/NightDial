@@ -459,7 +459,7 @@ for(const [name,color] of Object.entries(palettes)){const b=document.createEleme
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
 for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render();if(id==='thetaVolume'&&state.thetaSound)restartTheta()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaBeat','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render();if(['thetaDuration'].includes(id)&&state.thetaSound)restartTheta()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render();if(['thetaDuration'].includes(id)&&state.thetaSound)restartTheta()});
 for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}if(id==='thetaSound'){if(state.thetaSound)startTheta();else stopTheta('Arrêté manuellement.')}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
@@ -575,7 +575,7 @@ async function deleteThetaTrack(){
  });
 }
 function thetaFileValid(file){
- return Boolean(file)&&(/\\.mp3$/i.test(file.name||'')||file.type==='audio/mpeg')&&
+ return Boolean(file)&&(/\.mp3$/i.test(file.name||'')||file.type==='audio/mpeg')&&
    file.size>10000&&file.size<=100*1024*1024;
 }
 function stopTheta(message='Musique thêta arrêtée.'){
