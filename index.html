@@ -66,7 +66,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
 #splash span{font-size:31px;font-weight:250;letter-spacing:.23em;color:var(--accent);text-shadow:0 0 18px rgba(var(--rgb),.22)}
 #splash.done{opacity:0}
 #toast{position:fixed;z-index:80;top:calc(20px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-10px);width:max-content;max-width:90vw;color:#fff;background:#22252bea;padding:11px 14px;border:1px solid #ffffff27;border-radius:14px;font-size:12px;opacity:0;pointer-events:none;transition:opacity 250ms,transform 250ms;text-align:center}#toast.visible{opacity:1;transform:translateX(-50%) translateY(0)}
-#alarmControls{position:fixed;z-index:60;inset:auto 16px calc(25px + env(safe-area-inset-bottom));display:none;justify-content:center;gap:12px}body.alarming #alarmControls{display:flex}#alarmControls button{min-width:130px;border-radius:16px;min-height:55px;font-size:16px;font-weight:650}#stopAlarm{color:#fff;background:#692c2c;border:1px solid #ad4545}#snoozeAlarm{color:#000;background:var(--accent);border:0}
+#alarmControls{position:fixed;z-index:60;inset:auto 16px calc(25px + env(safe-area-inset-bottom));display:none;justify-content:center;gap:12px;flex-wrap:wrap}body.alarming #alarmControls{display:flex}#alarmStatus{flex:0 0 100%;text-align:center;font-size:.85rem;color:#fff}#alarmControls button{min-width:130px;border-radius:16px;min-height:55px;font-size:16px;font-weight:650}#stopAlarm{color:#fff;background:#692c2c;border:1px solid #ad4545}#snoozeAlarm{color:#000;background:var(--accent);border:0}
 @media(orientation:landscape){#analog{width:min(68dvh,58vw,580px)}#clockStage{gap:9px}#numeric .num-pair{font-size:min(25vw,64dvh)}#numeric .breath{font-size:min(21vw,54dvh)}#flip{width:min(88vw,1040px);gap:6px}.rail-board{padding:8px 12px}.flap-cell{aspect-ratio:1.05}.flap-glyph{font-size:clamp(50px,38dvh,190px)}#context{font-size:16px}.tab-panel{padding:13px 20px 20px}#sheet{max-height:96dvh}}
 @media(max-width:345px){.flap-glyph{font-size:17vw}.rail-header{letter-spacing:.13em}.sheet-head{padding:0 14px 10px}.tab-panel{padding:14px 14px}.field span{font-size:12px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
@@ -127,14 +127,12 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Rouge profond<small>Confort visuel dans l'obscurité</small></span><input aria-label="Rouge profond" id="deepRed" type="checkbox"></div>
       <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
       <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
-       <p class="section-title">Theta Sleep · musique Pixabay</p>
-       <div class="field"><span>Musique thêta<small>« Thetha Waves 428 Hz » · Michael-X_Studio · 9 min 30 · en mode nuit seulement</small></span><input id="thetaSound" type="checkbox" aria-label="Activer la musique thêta"></div>
-       <p class="status">Télécharge le MP3 original depuis <a href="https://pixabay.com/music/meditationspiritual-thetha-waves-428-hz-285027/" target="_blank" rel="noopener noreferrer">Pixabay · Thetha Waves 428 Hz</a>, puis importe-le ici. Le fichier reste sur ton appareil.</p>
-       <div class="field"><span>Musique locale<small>Importation une fois, puis lecture hors ligne (si stockage iOS conservé)</small></span><input id="thetaImport" type="file" accept="audio/mpeg,audio/mp3,.mp3" aria-label="Importer le morceau MP3 téléchargé sur Pixabay"></div>
-       <div class="actions"><button id="thetaRemove" type="button" class="action-secondary">Supprimer le morceau local</button></div>
+       <p class="section-title">Theta Sleep</p>
+       <div class="field"><span>Musique thêta<small>« Dérive thêta 428 Hz » · piste incluse · en mode nuit seulement</small></span><input id="thetaSound" type="checkbox" aria-label="Activer la musique thêta"></div>
        <div class="field"><span>Volume doux</span><input id="thetaVolume" aria-label="Volume des ondes thêta" type="range" min="5" max="35" step="5" value="15"></div>
        <div class="field"><span>Arrêt automatique</span><select id="thetaDuration" aria-label="Durée de l’ambiance thêta"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
-       <p id="thetaStatus" class="status" role="status" aria-live="polite">Aucun morceau importé. Les effets sur le sommeil ne sont pas scientifiquement garantis. Safari peut interrompre l’audio si l’app est suspendue.</p>
+       <p id="thetaStatus" class="status" role="status" aria-live="polite">Active le mode nuit, puis coche Musique thêta. Sur iPhone, utilise les boutons de volume si nécessaire.</p>
+       <p id="thetaOffline" class="status" role="status" hidden>Piste disponible hors ligne.</p>
        <p class="section-title">Smart Bedside · profils automatiques</p>
        <div class="field"><span>Profil de chevet<small>Suit les heures Début et Fin ci-dessus. Le style de jour est conservé.</small></span><input type="checkbox" id="bedsideAuto" aria-label="Activer le profil de chevet automatique"></div>
        <div class="field"><span>Cadran de nuit</span><select id="bedsideMode" aria-label="Cadran de nuit"><option value="analog">Analogique</option><option value="numeric">Numérique</option><option value="flip">Flip gare</option></select></div>
@@ -152,8 +150,8 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
        <div class="field"><span>Sonnerie du réveil<small>Trois mélodies originales, générées sur l’appareil</small></span><select id="alarmMelody" aria-label="Sonnerie du réveil"><option value="zen">Zen · cloche douce</option><option value="nature">Nature · oiseaux synthétiques</option><option value="digital">Digital · impulsions claires</option></select></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
-      <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son (iPhone)</button><button class="action-secondary" id="previewMelody" type="button">Écouter la sonnerie</button><button class="action-secondary" id="testWebAudio" type="button">Diagnostic Web Audio</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Test iPhone : son audio natif généré localement. Le diagnostic Web Audio teste séparément les oscillateurs. Vérifie aussi la sortie audio et le mode silencieux.</p>
-      <p class="status">Le réveil utilise désormais le lecteur audio natif iPhone avec montée de volume intégrée. Safari peut néanmoins refuser une lecture automatique sans interaction, et suspendre l’alarme lorsque l’écran est verrouillé ou l’app en arrière-plan. Utilise l’alarme native iOS pour les rendez-vous importants.</p>
+      <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son (iPhone)</button><button class="action-secondary" id="previewMelody" type="button">Écouter et préparer la sonnerie</button><button class="action-secondary" id="testWebAudio" type="button">Diagnostic Web Audio</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Test iPhone : son audio natif généré localement. Le diagnostic Web Audio teste séparément les oscillateurs. Vérifie aussi la sortie audio et le mode silencieux.</p>
+      <p class="status">Après avoir ouvert NightDial, touche « Écouter et préparer la sonnerie », puis garde l’app visible et l’écran éveillé. Safari peut refuser la lecture à l’heure prévue. Utilise l’alarme native iOS pour les réveils importants.</p>
     </section>
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
       <p class="section-title">Affichage et énergie</p>
@@ -175,7 +173,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="actions"><button class="action-secondary" id="restartTour">Revoir le guide</button></div>
     </section>
   </section>
-  <div id="alarmControls"><button id="snoozeAlarm">Reporter</button><button id="stopAlarm">Arrêter</button></div>
+  <div id="alarmControls"><span id="alarmStatus" role="status"></span><button id="snoozeAlarm">Reporter</button><button id="stopAlarm">Arrêter</button></div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="onboard" aria-label="Bienvenue dans NightDial" role="dialog" aria-modal="true" hidden>
     <div class="onboard-card"><div class="onboard-art" id="tourArt" aria-hidden="true">12:48</div><h1 id="tourTitle">NightDial</h1><p id="tourText"></p><div class="dots" id="tourDots"></div><button id="tourNext" class="action-primary">Continuer</button><button id="tourSkip" class="ghost" style="margin-left:10px">Passer</button></div>
@@ -208,20 +206,39 @@ let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
 function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','alarmMelody','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor','thetaVolume','thetaDuration'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
-/* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
-   The display is updated only when its text changes, not every animation frame. */
-function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
-  const mins=minuteOfDay(wake);
-  if(mins===null)return null;
-  const target=new Date(now.getTime());
-  target.setHours(Math.floor(mins/60),mins%60,0,0);
-  if(target.getTime()<=now.getTime())target.setDate(target.getDate()+1);
-  const next=snooze>now.getTime()?new Date(snooze):target;
-  const total=Math.max(0,Math.ceil((next.getTime()-now.getTime())/60000));
-  const h=Math.floor(total/60),m=total%60;
-  return {text:h?h+' h '+String(m).padStart(2,'0'):'0 h '+String(m).padStart(2,'0'),
-    description:h?h+' heure'+(h>1?'s':'')+' et '+m+' minute'+(m>1?'s':''):m+' minute'+(m>1?'s':''),
-    next};
+const ALARM_RECOVERY_MS=120000;
+const ALARM_STORAGE_KEY='nightdial-alarm-v1';
+let alarmSchedule={last:'',snooze:0};
+try{
+ const savedAlarm=JSON.parse(localStorage.getItem(ALARM_STORAGE_KEY)||'null');
+ if(typeof savedAlarm?.last==='string')alarmSchedule.last=savedAlarm.last;
+ if(Number.isFinite(savedAlarm?.snooze)&&savedAlarm.snooze>0)alarmSchedule.snooze=savedAlarm.snooze;
+}catch{}
+function saveAlarmSchedule(){
+ try{localStorage.setItem(ALARM_STORAGE_KEY,JSON.stringify(alarmSchedule))}catch{}
+}
+function dailyAlarm(now,offset=0){
+ const mins=minuteOfDay(state.wakeTime);
+ if(mins===null)return null;
+ const target=new Date(now);
+ // Set the calendar day first so a DST gap cannot shift the following day's alarm.
+ target.setDate(target.getDate()+offset);
+ target.setHours(Math.floor(mins/60),mins%60,0,0);
+ return {target,key:todayKey(target)+'/'+state.wakeTime};
+}
+function nextAlarm(now){
+ if(alarmSchedule.snooze)return new Date(alarmSchedule.snooze);
+ const today=dailyAlarm(now);
+ if(!today)return null;
+ return today.target>now&&today.key!==alarmSchedule.last?today.target:dailyAlarm(now,1).target;
+}
+function remainingToWake(now){
+ const next=nextAlarm(now);
+ if(!next)return null;
+ const total=Math.max(0,Math.ceil((next-now)/60000));
+ const h=Math.floor(total/60),m=total%60;
+ return {text:(h?h+' h '+String(m).padStart(2,'0'):'0 h '+String(m).padStart(2,'0')),
+   description:h?h+' heure'+(h>1?'s':'')+' et '+m+' minute'+(m>1?'s':''):m+' minute'+(m>1?'s':'')};
 }
 function updateCountdown(now=new Date()){
   const active=Boolean(state.soundAlarm);
@@ -229,14 +246,13 @@ function updateCountdown(now=new Date()){
   const node=$('alarmCountdown');
   node.hidden=!visible;
   if(!visible){node.textContent='';return}
-  const count=remainingToWake(now,state.wakeTime,typeof snoozeUntil==='number'?snoozeUntil:0);
+  const count=remainingToWake(now);
   if(!count){node.hidden=true;return}
-  const ringing=typeof alarmActive==='boolean'&&alarmActive;
-  const value=ringing?'En cours':count.text;
+  const value=alarmActive?alarmLabels[alarmPhase]:count.text;
   if(node.textContent!==value)node.textContent=value;
   $('alarmIndicator').setAttribute('aria-label',
     'Alarme sonore activée à '+state.wakeTime+
-    (ringing?', réveil en cours':', dans '+count.description));
+    (alarmActive?', '+value:', dans '+count.description));
 }
 /* v22 Smart Bedside: reversible presentation-only profiles. Never overwrite daytime preferences. */
 let bedsidePreviewUntil=0;
@@ -301,17 +317,55 @@ function updateAdaptive(now=new Date()){
  if(state.deepRed&&!bedsideShowing(now)){const color=nightActive?'#aa1d20':accent();if(root.style.getPropertyValue('--accent')!==color){setVar('--accent',color);setVar('--rgb',color.match(/[a-f\d]{2}/gi).map(x=>parseInt(x,16)).join(','))}}
  const step=state.oledShift&&document.visibilityState==='visible'?Math.floor(now.getTime()/120000):-1;if(step!==lastOledStep){lastOledStep=step;const positions=[[0,0],[2,-2],[-1,2],[-2,-1],[1,1]];const [x,y]=step<0?[0,0]:positions[step%positions.length];setVar('--shift-x',x+'px');setVar('--shift-y',y+'px')}
 }
-function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),mins=now.getMinutes(),secs=now.getSeconds()+now.getMilliseconds()/1000;const hr=hours%12+mins/60+secs/3600,mn=mins+secs/60;const paused=secs<.42?0:(secs-.42)*60/59.58;
- // Calculate endpoints directly: Safari can otherwise double-apply SVG/CSS transform origins.
- const pointHand=(id,degrees,tail,length)=>{const a=degrees*Math.PI/180,s=Math.sin(a),c=Math.cos(a),hand=$(id);hand.setAttribute('x1',200-tail*s);hand.setAttribute('y1',200+tail*c);hand.setAttribute('x2',200+length*s);hand.setAttribute('y2',200-length*c)};
- pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
- const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
- setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
- const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});const oldMode=document.body.dataset.mode;updateAdaptive(now);syncTheta(now);if(oldMode!==document.body.dataset.mode&&state.seconds)setTimeout(syncClockLoop,0);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
+function paintHands(now,withSeconds){
+ const hours=now.getHours(),mins=now.getMinutes(),secs=now.getSeconds()+now.getMilliseconds()/1000;
+ const hr=hours%12+mins/60+secs/3600,mn=mins+secs/60;
+ // Set the SVG endpoints directly to avoid Safari double-applying transform origins.
+ const pointHand=(id,degrees,tail,length)=>{
+  const a=degrees*Math.PI/180,s=Math.sin(a),c=Math.cos(a),hand=$(id);
+  hand.setAttribute('x1',200-tail*s);hand.setAttribute('y1',200+tail*c);
+  hand.setAttribute('x2',200+length*s);hand.setAttribute('y2',200-length*c);
+ };
+ pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);
+ if(withSeconds)pointHand('handSecond',(secs<.42?0:(secs-.42)*60/59.58)*6,36,145);
+}
+let lastClockMode='';
+function updateClock(now=new Date()){
+ const minute=Math.floor(now.getTime()/60000);
+ const changed=minute!==lastClockMinute;
+ if(changed){
+  lastClockMinute=minute;
+  $('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});
+  updateAdaptive(now);syncTheta(now);syncAlarm(now);updateCountdown(now);updateMorningBrief(now);
+ }
+ const mode=document.body.dataset.mode;
+ if(mode==='analog'){
+  if(changed||mode!==lastClockMode||state.seconds)paintHands(now,state.seconds);
+ }else if(changed||mode!==lastClockMode){
+  const value=timeLabel(now);
+  if(mode==='numeric')setNumeric(value);
+  else if(!demoInProgress)setFlaps(value);
+  $(mode).setAttribute('aria-label',value.slice(0,2)+' heures '+value.slice(2));
+ }
+ lastClockMode=mode;
 }
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
-function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||bedsideModeAt()!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
-function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&bedsideModeAt()==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
+function analogFrame(){
+ if(document.visibilityState!=='visible')return;
+ updateClock();
+ if(document.body.dataset.mode==='analog'&&state.seconds)frameId=requestAnimationFrame(analogFrame);
+ else scheduleClockLoop();
+}
+function scheduleClockLoop(){
+ if(document.visibilityState!=='visible')return;
+ if(state.seconds&&document.body.dataset.mode==='analog')frameId=requestAnimationFrame(analogFrame);
+ else clockTimeout=setTimeout(syncClockLoop,60000-Date.now()%60000+30);
+}
+function syncClockLoop(){
+ stopLoop();
+ if(document.visibilityState!=='visible')return;
+ updateClock();scheduleClockLoop();
+}
 
 /* v19.1: motion starts from the user's real resting orientation (not a fixed 45°).
    Two sensor APIs, explicit permission, automatic pause and a sensor-free demo. */
@@ -354,20 +408,30 @@ function pushMotion(beta,gamma){
   }
   if(!motionFrame)motionFrame=requestAnimationFrame(motionPaint);
 }
-function onDeviceOrientation(event){pushMotion(event.beta,event.gamma)}
+function onDeviceOrientation(event){
+ if(!Number.isFinite(event.beta)||!Number.isFinite(event.gamma))return;
+ if(motionSource!=='orientation'){
+  if(motionSource==='gravity')motionZero=null;
+  motionSource='orientation';
+  window.removeEventListener('devicemotion',onDeviceMotion);
+ }
+ pushMotion(event.beta,event.gamma);
+}
+let motionSource='';
 function onDeviceMotion(event){
+ if(motionSource==='orientation')return;
   // Gravity-based tilt fallback for iOS variants that do not emit deviceorientation.
   const g=event.accelerationIncludingGravity;
   if(!g||!Number.isFinite(g.x)||!Number.isFinite(g.y)||!Number.isFinite(g.z))return;
   const beta=Math.atan2(g.y,Math.hypot(g.x,g.z))*180/Math.PI;
   const gamma=Math.atan2(g.x,Math.hypot(g.y,g.z))*180/Math.PI;
-  pushMotion(beta,gamma);
+  motionSource='gravity';pushMotion(beta,gamma);
 }
 function detachMotion(){
   if(motionListening){
     window.removeEventListener('deviceorientation',onDeviceOrientation);
     window.removeEventListener('devicemotion',onDeviceMotion);
-    motionListening=false;
+    motionListening=false;motionSource='';
   }
   clearTimeout(motionWatchdog);motionWatchdog=null;
 }
@@ -458,9 +522,33 @@ tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.ad
 for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
-for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render();if(id==='thetaVolume'&&state.thetaSound)restartTheta()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render();if(['thetaDuration'].includes(id)&&state.thetaSound)restartTheta()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}if(id==='thetaSound'){if(state.thetaSound)startTheta();else stopTheta('Arrêté manuellement.')}});
+for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{
+ state[id]=+e.target.value;
+ if(id==='thetaVolume'){applyThetaVolume();persist()}else render();
+});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaDuration'])$(id).addEventListener('change',e=>{
+ state[id]=['sunriseDuration','snoozeMinutes','thetaDuration'].includes(id)?+e.target.value:e.target.value;
+ if(id==='thetaDuration'&&thetaAudio){thetaEndAt=thetaStartedAt+thetaDurationMs();scheduleThetaEnd()}
+ if(id==='wakeTime'){clearSnooze();syncAlarm()}
+ render();
+});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{
+ state[id]=e.target.checked;
+ if(id==='thetaSound'){
+  if(state.thetaSound)startTheta();
+  else stopTheta('Arrêté manuellement.');
+  return;
+ }
+ if(id==='soundAlarm'){
+  if(!state.soundAlarm){clearSnooze();stopAlarm()}
+  syncAlarm();
+ }
+ render();
+ if(id==='wake')manageWake();
+ if(id==='showWeather'&&state.showWeather||id==='morningBriefing'&&state.morningBriefing)updateWeather(true);
+ if(id==='flipSound'&&state.flipSound)unlockAudio();
+ if(id==='motion'&&state.motion)requestMotionAccess();
+});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
@@ -508,7 +596,7 @@ function updateMorningBrief(now=new Date()){
  const forecast=forecastForMorning(wake),parts=['☀ Matin'];
  if(forecast?.temperature)parts.push('Prévu '+forecast.temperature);
  if(forecast?.sunrise)parts.push('Lever du soleil '+forecast.sunrise);
- if(!forecast)parts.push(morningForecast?'Prévisions indisponibles':'Chargement des prévisions…');
+ if(!forecast)parts.push(weatherBusy?'Chargement des prévisions…':'Prévisions indisponibles');
  const value=parts.join(' · ');if(node.textContent!==value)node.textContent=value;
 }
 $('previewMorning').addEventListener('click',()=>{
@@ -524,128 +612,89 @@ try{cityCache=JSON.parse(localStorage.getItem('nightdial-city-v1')||'null')}catc
 async function getPosition(){return new Promise((resolve,reject)=>{if(!navigator.geolocation)return reject(Error('Localisation indisponible'));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:11000,maximumAge:0})})}
 async function lookupCity(lat,lon){if(cityCache&&Date.now()-cityCache.at<86400000&&Math.abs(cityCache.lat-lat)<.04&&Math.abs(cityCache.lon-lon)<.04)return cityCache.name;try{const url='https://api.bigdatacloud.net/data/reverse-geocode-client?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&localityLanguage=fr';const res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('Ville introuvable');const data=await res.json();const name=String(data.city||data.locality||'').trim().slice(0,70);if(name){cityCache={name,lat,lon,at:Date.now()};try{localStorage.setItem('nightdial-city-v1',JSON.stringify(cityCache))}catch{}}return name}catch{return ''}}
 function drawWeather(){if(!weatherInfo){$('weatherLine').hidden=true;return}$('weatherLine').hidden=!state.showWeather;$('weatherIcon').innerHTML=weatherSVG(weatherInfo.code,weatherInfo.day);$('weatherIcon').className=weatherInfo.code<=1?'sun':weatherInfo.code<=3?'cloud':weatherInfo.code<70?'rain':weatherInfo.code<90?'snow':'storm';$('temperature').textContent=Math.round(weatherInfo.temp)+'°C';$('city').textContent=weatherInfo.city?'· '+weatherInfo.city:''}
-async function updateWeather(force=false){if(weatherBusy||(!state.showWeather&&!state.morningBriefing)||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent='Météo hors ligne : dernière donnée conservée.';return}weatherBusy=true;$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&daily=sunrise&forecast_days=3&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();morningForecast={hourly:data.hourly,daily:data.daily};drawWeather();updateMorningBrief();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.');updateMorningBrief()}finally{weatherBusy=false}}
+async function updateWeather(force=false){if(weatherBusy||(!state.showWeather&&!state.morningBriefing)||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent=weatherInfo?'Météo hors ligne : dernière donnée conservée.':'Météo hors ligne.';updateMorningBrief();return}weatherBusy=true;updateMorningBrief();$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&daily=sunrise&forecast_days=3&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();morningForecast={hourly:data.hourly,daily:data.daily};drawWeather();updateMorningBrief();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.');updateMorningBrief()}finally{weatherBusy=false;updateMorningBrief()}}
 $('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
 // Web Audio: sound is created by oscillators, gated behind a user gesture.
 
-/* v25 Theta Music: a user-imported licensed Pixabay MP3, not synthesized
-   binaural beats. Keep the copyrighted original locally in IndexedDB, never
-   embed/re-distribute it in the public GitHub repository. */
-let thetaAudio=null,thetaUrl=null,thetaEndAt=0,thetaTimer=null,thetaToken=0;
-let thetaTrack=null,thetaDbPromise=null,thetaTrackReady=false;
-const THETA_MUSIC_PAGE='https://pixabay.com/music/meditationspiritual-thetha-waves-428-hz-285027/';
-function thetaStatus(message){$('thetaStatus').textContent=message}
-function thetaNight(now=new Date()){
+const THETA_TRACK='./derive-theta-428hz.mp3';
+const thetaDurationMs=()=>clamp(state.thetaDuration,15,60)*60000;
+let thetaAudio=null,thetaStartedAt=0,thetaEndAt=0,thetaTimer=null,thetaRefresh=null,thetaPhase='idle';
+let thetaPlayed=false;
+function requestThetaCache(){
+ navigator.serviceWorker?.controller?.postMessage(thetaPlayed?'cache-theta-track':'theta-cache-status');
+}
+navigator.serviceWorker?.addEventListener('controllerchange',requestThetaCache);
+navigator.serviceWorker?.addEventListener('message',event=>{
+ if(event.data?.type==='theta-cache-status')$('thetaOffline').hidden=!event.data.ready;
+});
+requestThetaCache();
+function thetaStatus(message){
+ const node=$('thetaStatus');
+ if(node.textContent!==message)node.textContent=message;
+}
+function thetaNight(now){
  const minute=now.getHours()*60+now.getMinutes();
  return !!state.manualNight||!!state.smartNight&&inSchedule(minute,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd));
 }
-function thetaDatabase(){
- if(thetaDbPromise)return thetaDbPromise;
- if(!('indexedDB' in window))return Promise.reject(Error('Stockage local indisponible'));
- thetaDbPromise=new Promise((resolve,reject)=>{
-  const req=indexedDB.open('nightdial-audio-v1',1);
-  req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks')};
-  req.onsuccess=()=>resolve(req.result);
-  req.onerror=()=>reject(req.error||Error('Erreur IndexedDB'));
- }).catch(e=>{thetaDbPromise=null;throw e});
- return thetaDbPromise;
-}
-async function saveThetaTrack(file){
- const db=await thetaDatabase();
- await new Promise((resolve,reject)=>{
-  const tx=db.transaction('tracks','readwrite');
-  tx.objectStore('tracks').put(file,'theta-pixabay');
-  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('Sauvegarde impossible'));
- });
-}
-async function loadThetaTrack(){
- const db=await thetaDatabase();
- return new Promise((resolve,reject)=>{
-  const req=db.transaction('tracks','readonly').objectStore('tracks').get('theta-pixabay');
-  req.onsuccess=()=>resolve(req.result||null);
-  req.onerror=()=>reject(req.error||Error('Lecture impossible'));
- });
-}
-async function deleteThetaTrack(){
- const db=await thetaDatabase();
- await new Promise((resolve,reject)=>{
-  const tx=db.transaction('tracks','readwrite');
-  tx.objectStore('tracks').delete('theta-pixabay');
-  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error('Suppression impossible'));
- });
-}
-function thetaFileValid(file){
- return Boolean(file)&&(/\.mp3$/i.test(file.name||'')||file.type==='audio/mpeg')&&
-   file.size>10000&&file.size<=100*1024*1024;
-}
 function stopTheta(message='Musique thêta arrêtée.'){
- ++thetaToken;clearInterval(thetaTimer);thetaTimer=null;
- if(thetaAudio){thetaAudio.pause();thetaAudio.removeAttribute('src');thetaAudio.load();thetaAudio=null}
- if(thetaUrl){URL.revokeObjectURL(thetaUrl);thetaUrl=null}
- thetaEndAt=0;state.thetaSound=false;$('thetaSound').checked=false;
- thetaStatus(message);persist();
+ clearTimeout(thetaTimer);clearInterval(thetaRefresh);
+ const audio=thetaAudio;
+ thetaAudio=null;thetaPhase='idle';thetaStartedAt=0;thetaEndAt=0;
+ if(audio){audio.pause();audio.removeAttribute('src');audio.load()}
+ state.thetaSound=false;$('thetaSound').checked=false;
+ thetaStatus(message);
 }
 function syncTheta(now=new Date()){
- if(!state.thetaSound)return;
+ if(!thetaAudio)return;
  if(!thetaNight(now)){stopTheta('Lecture arrêtée : sortie du mode nuit.');return}
- if(thetaEndAt&&Date.now()>=thetaEndAt){stopTheta('Minuterie musicale terminée.');return}
- if(thetaAudio){
-  const remain=Math.max(1,Math.ceil((thetaEndAt-Date.now())/60000));
-  thetaStatus('Thetha Waves · '+remain+' min restantes. Utilise le volume de l’iPhone si nécessaire.');
+ if(now.getTime()>=thetaEndAt){stopTheta('Minuterie musicale terminée.');return}
+ if(thetaPhase==='playing'){
+  const remain=Math.ceil((thetaEndAt-now.getTime())/60000);
+  thetaStatus('Dérive thêta · '+remain+' min restantes.');
  }
 }
+function scheduleThetaEnd(){
+ clearTimeout(thetaTimer);
+ syncTheta();
+ if(thetaAudio)thetaTimer=setTimeout(syncTheta,Math.max(0,thetaEndAt-Date.now()));
+}
+function applyThetaVolume(){
+ if(thetaAudio)thetaAudio.volume=clamp(state.thetaVolume,5,35)/100;
+}
 function startTheta(){
- // Must be invoked synchronously from a checkbox click for iOS audio.play().
- if(!state.thetaSound)return;
- if(!thetaTrack){stopTheta('Importe d’abord le MP3 depuis Pixabay dans le champ « Musique locale ».');return}
- if(!thetaNight()){stopTheta('Active le mode nuit pour lancer cette musique.');return}
- const token=++thetaToken;
+ if(!thetaNight(new Date())){stopTheta('Active le mode nuit pour lancer cette musique.');return}
+ if(alarmActive){stopTheta('Arrête le réveil avant de lancer la musique.');return}
  try{
-  if(typeof setPlaybackAudioSession==='function')setPlaybackAudioSession();
-  const url=URL.createObjectURL(thetaTrack),audio=new Audio(url);
-  thetaUrl=url;thetaAudio=audio;audio.loop=true;audio.preload='auto';
-  audio.volume=clamp(state.thetaVolume,5,35)/100;
-  thetaEndAt=Date.now()+clamp(state.thetaDuration,15,60)*60000;
-  audio.onplaying=()=>{if(token===thetaToken)syncTheta()};
-  audio.onpause=()=>{if(token===thetaToken&&state.thetaSound)thetaStatus('Musique interrompue par iOS. Désactive puis réactive la lecture.')};
-  audio.onerror=()=>{if(token===thetaToken)stopTheta('Impossible de lire ce MP3 sur iPhone.')};
-  const result=audio.play(); // Directly in the user gesture, before any await.
-  if(result?.catch)result.catch(e=>{if(token===thetaToken)stopTheta('Lecture bloquée : '+(e?.name||'autorisation iOS'))});
-  thetaTimer=setInterval(()=>syncTheta(),10000);
-  thetaStatus('Démarrage de Thetha Waves…');
- }catch(e){if(token===thetaToken)stopTheta('Erreur : '+(e?.message||'audio non disponible'))}
+  setPlaybackAudioSession();
+  const audio=new Audio(THETA_TRACK);
+  thetaAudio=audio;audio.loop=true;thetaPhase='starting';
+  applyThetaVolume();
+  thetaStartedAt=Date.now();thetaEndAt=thetaStartedAt+thetaDurationMs();
+  thetaStatus('Démarrage de Dérive thêta…');
+  audio.onplaying=()=>{
+   if(thetaAudio!==audio)return;
+   thetaPhase='playing';thetaPlayed=true;syncTheta();requestThetaCache();
+  };
+  audio.onwaiting=()=>{
+   if(thetaAudio!==audio)return;
+   thetaPhase='buffering';thetaStatus('Chargement de Dérive thêta…');
+  };
+  audio.onpause=()=>{
+   if(thetaAudio!==audio)return;
+   thetaPhase='paused';thetaStatus('Lecture interrompue. Désactive puis réactive la musique pour reprendre.');
+  };
+  audio.onerror=()=>{
+   if(thetaAudio===audio)stopTheta('Musique indisponible. Si tu es hors ligne, réessaie avec une connexion.');
+  };
+  scheduleThetaEnd();
+  thetaRefresh=setInterval(syncTheta,15000);
+  audio.play()?.catch(error=>{
+   if(thetaAudio===audio)stopTheta('Lecture impossible ('+(error?.name||'erreur audio')+').');
+  });
+ }catch{stopTheta('Impossible de démarrer la musique.')}
 }
-function restartTheta(){
- if(!state.thetaSound)return;
- stopTheta('Réglage modifié.');
- state.thetaSound=true;$('thetaSound').checked=true;
- startTheta();persist();
-}
-$('thetaImport').addEventListener('change',async e=>{
- const file=e.target.files?.[0];if(!file)return;
- if(!thetaFileValid(file)){thetaStatus('Choisis un fichier MP3 valide, de moins de 100 Mo.');e.target.value='';return}
- stopTheta('Import en cours…');
- thetaStatus('Enregistrement de la musique sur cet appareil…');
- try{
-  await saveThetaTrack(file);
-  thetaTrack=file;thetaTrackReady=true;
-  thetaStatus('Musique prête : '+file.name+' ('+(file.size/1048576).toFixed(1)+' Mo). Active le mode nuit puis coche Musique thêta.');
- }catch(err){thetaStatus('Stockage local impossible : '+(err?.message||'quota ou mode privé')+'.')}
- e.target.value='';
-});
-$('thetaRemove').addEventListener('click',async()=>{
- stopTheta('Suppression du morceau…');
- try{await deleteThetaTrack();thetaTrack=null;thetaTrackReady=true;thetaStatus('Morceau supprimé de cet appareil.')}
- catch(err){thetaStatus('Suppression impossible : '+(err?.message||'stockage inaccessible'))}
-});
-async function restoreThetaTrack(){
- try{
-  thetaTrack=await loadThetaTrack();thetaTrackReady=true;
-  thetaStatus(thetaTrack?'Musique prête : '+(thetaTrack.name||'Thetha Waves')+'. Active le mode nuit et coche Musique thêta.':'Aucun MP3 importé. Télécharge la piste depuis Pixabay, puis importe-la ici.');
- }catch{thetaTrackReady=true;thetaStatus('Stockage indisponible : essaie dans Safari plutôt qu’en navigation privée.')}
-}
-restoreThetaTrack();
-let audioCtx=null,alarmTimer=null,alarmGain=null,alarmStarted=0,alarmActive=false,snoozeUntil=0,lastAlarmDay='',previewAudioTimer=null;
+
+let audioCtx=null,alarmActive=false,alarmPhase='idle',alarmTimer=null;
 // iOS 26+ can render Web Audio with state='running' but no audible output.
 // The user-initiated HTMLMediaElement test is an independent output path.
 function setPlaybackAudioSession(){
@@ -739,7 +788,8 @@ function playTone(freq=520,seconds=.14,volume=.04,delay=0){
 /* v23: native iOS-compatible alarm engine. WAV files include a gain ramp in the
    PCM samples because iOS Safari does not reliably honor HTMLMediaElement.volume.
    Automatic playback still depends on Safari policies: no background guarantee. */
-let alarmNativeAudio=null,alarmNativeUrl=null,alarmAttempt=0,melodyPreview=null,melodyPreviewUrl=null;
+let alarmNativeAudio=null,alarmNativeUrl=null,alarmAttempt=0,melodyPreview=null;
+const alarmLabels={starting:'Démarrage du son…',playing:'Sonnerie en cours',blocked:'Sonnerie bloquée',paused:'Sonnerie interrompue'};
 const melodyNames={zen:'Zen',nature:'Nature',digital:'Digital'};
 function normalizeMelody(value){return Object.hasOwn(melodyNames,value)?value:'zen'}
 function melodySample(t,kind){
@@ -792,70 +842,106 @@ function makeMelodyWav(kind='zen',duration=4,volume=.6,progressive=false){
   }
   return new Blob([v.buffer],{type:'audio/wav'});
 }
+function alarmPlayer(){
+ if(!alarmNativeAudio)alarmNativeAudio=new Audio();
+ return alarmNativeAudio;
+}
+function releaseAlarmSource(){
+ const audio=alarmNativeAudio;
+ if(audio){
+  audio.onplaying=audio.onpause=audio.onended=audio.onerror=null;
+  audio.pause();audio.removeAttribute('src');audio.load();
+ }
+ if(alarmNativeUrl){URL.revokeObjectURL(alarmNativeUrl);alarmNativeUrl=null}
+}
 function disposeMelodyPreview(){
-  if(melodyPreview){melodyPreview.pause();melodyPreview.removeAttribute('src');melodyPreview.load();melodyPreview=null}
-  if(melodyPreviewUrl){URL.revokeObjectURL(melodyPreviewUrl);melodyPreviewUrl=null}
+ if(!melodyPreview)return;
+ melodyPreview=null;$('previewMelody').disabled=false;releaseAlarmSource();
 }
 function previewAlarmMelody(){
-  // Direct user gesture is required for Safari to start playback.
-  disposeMelodyPreview();stopNativeTest();setPlaybackAudioSession();
-  const status=$('audioTestStatus'),button=$('previewMelody'),kind=normalizeMelody(state.alarmMelody);
-  try{
-    melodyPreviewUrl=URL.createObjectURL(makeMelodyWav(kind,5,.35+clamp(state.alarmVolume,5,80)/80*.40,false));
-    const audio=new Audio(melodyPreviewUrl);melodyPreview=audio;audio.preload='auto';
-    button.disabled=true;audio.onplaying=()=>{status.textContent='Sonnerie '+melodyNames[kind]+' : lecture sur iPhone.'};
-    audio.onended=()=>{if(melodyPreview===audio){button.disabled=false;status.textContent='Aperçu '+melodyNames[kind]+' terminé.'}};
-    audio.onerror=()=>{button.disabled=false;status.textContent='Aperçu indisponible : erreur du lecteur iPhone.'};
-    const result=audio.play();
-    if(result?.catch)result.catch(error=>{if(melodyPreview===audio){button.disabled=false;status.textContent='Safari a bloqué cet aperçu : '+(error?.name||'lecture refusée')}});
-    setTimeout(()=>{if(melodyPreview===audio)button.disabled=false},7000);
-  }catch(error){button.disabled=false;status.textContent='Impossible de générer la sonnerie : '+(error?.message||'erreur')}
+ const status=$('audioTestStatus'),button=$('previewMelody'),kind=normalizeMelody(state.alarmMelody);
+ if(alarmActive){status.textContent='Arrête le réveil avant d’écouter un aperçu.';return}
+ disposeMelodyPreview();stopNativeTest();setPlaybackAudioSession();
+ const attempt=++alarmAttempt;
+ try{
+  const audio=alarmPlayer();melodyPreview=audio;
+  alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,5,.35+clamp(state.alarmVolume,5,80)/80*.40,false));
+  audio.src=alarmNativeUrl;audio.loop=false;button.disabled=true;
+  const finish=message=>{
+   if(attempt!==alarmAttempt||!melodyPreview)return;
+   disposeMelodyPreview();status.textContent=message;
+  };
+  audio.onplaying=()=>{status.textContent='Aperçu '+melodyNames[kind]+' en cours.'};
+  audio.onended=()=>finish('Aperçu terminé. Garde NightDial au premier plan jusqu’au réveil.');
+  audio.onerror=()=>finish('Aperçu indisponible : erreur du lecteur audio.');
+  audio.play()?.catch(error=>finish('Aperçu bloqué ('+(error?.name||'lecture refusée')+').'));
+  setTimeout(()=>finish('Aperçu arrêté.'),8000);
+ }catch{disposeMelodyPreview();status.textContent='Impossible de préparer la sonnerie.'}
 }
-function disposeAlarmNative(){
-  if(alarmNativeAudio){alarmNativeAudio.pause();alarmNativeAudio.removeAttribute('src');alarmNativeAudio.load();alarmNativeAudio=null}
-  if(alarmNativeUrl){URL.revokeObjectURL(alarmNativeUrl);alarmNativeUrl=null}
+function setAlarmPhase(phase){
+ alarmPhase=phase;$('alarmStatus').textContent=alarmLabels[phase]||'';updateCountdown();
 }
 function alarmAudioFailed(reason){
-  $('audioTestStatus').textContent='Réveil : lecture bloquée ('+reason+'). Ouvre Safari et utilise l’alarme native iOS comme secours.';
-  toast('Son du réveil bloqué par iOS');
+ setAlarmPhase('blocked');
+ $('audioTestStatus').textContent='Réveil : lecture bloquée ('+reason+'). Utilise l’alarme native iOS.';
 }
 function beginAlarmAudio(attempt){
-  setPlaybackAudioSession();
-  disposeMelodyPreview();stopNativeTest();
-  try{
-    const kind=normalizeMelody(state.alarmMelody);
-    const level=Math.min(.85, .25+clamp(state.alarmVolume,5,80)/80*.55);
-    alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,120,level,true));
-    const audio=new Audio(alarmNativeUrl);alarmNativeAudio=audio;audio.preload='auto';
-    audio.loop=true;
-    audio.onerror=()=>{if(attempt===alarmAttempt)alarmAudioFailed('erreur média '+(audio.error?.code||'?'))};
-    // This may be rejected without an iOS user gesture. Do not claim success early.
-    const result=audio.play();
-    if(result?.then)result.then(()=>{if(attempt===alarmAttempt)$('audioTestStatus').textContent='Réveil '+melodyNames[kind]+' : lecture lancée (visibilité iOS requise).'}).catch(e=>{
-      if(attempt===alarmAttempt)alarmAudioFailed(e?.name||'autorisation manquante');
-    });
-    return true;
-  }catch(error){
-    if(attempt===alarmAttempt)alarmAudioFailed(error?.message||'erreur du lecteur');
-    return false;
-  }
+ setPlaybackAudioSession();disposeMelodyPreview();stopNativeTest();
+ try{
+  const kind=normalizeMelody(state.alarmMelody);
+  const level=Math.min(.85,.25+clamp(state.alarmVolume,5,80)/80*.55);
+  const audio=alarmPlayer();
+  alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,120,level,true));
+  audio.src=alarmNativeUrl;audio.loop=true;
+  audio.onplaying=()=>{if(attempt===alarmAttempt)setAlarmPhase('playing')};
+  audio.onpause=()=>{if(attempt===alarmAttempt&&audio.paused&&alarmPhase==='playing')setAlarmPhase('paused')};
+  audio.onerror=()=>{if(attempt===alarmAttempt)alarmAudioFailed('erreur média '+(audio.error?.code||'?'))};
+  audio.play()?.catch(error=>{
+   if(attempt===alarmAttempt)alarmAudioFailed(error?.name||'autorisation manquante');
+  });
+ }catch(error){alarmAudioFailed(error?.message||'erreur du lecteur')}
 }
 $('previewMelody').addEventListener('click',previewAlarmMelody);
-function playClick(){if(!state.flipSound||!audioCtx)return;playTone(390,.055,.014)}
-function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()-alarmStarted)/120000),level=(.018+.12*growth)*clamp(state.alarmVolume,5,80)/80;playTone(490+growth*130,.5,level)}
+function playClick(){if(state.flipSound&&audioCtx)playTone(390,.055,.014)}
 function startAlarm(){
-  if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;
-  stopTheta('Arrêté pour laisser place au réveil.');alarmActive=true;alarmStarted=Date.now();alarmAttempt++;
-  document.body.classList.add('alarming');updateCountdown();
-  toast('Réveil NightDial · '+melodyNames[normalizeMelody(state.alarmMelody)]);
-  beginAlarmAudio(alarmAttempt);
+ if(thetaAudio)stopTheta('Arrêté pour laisser place au réveil.');
+ alarmActive=true;document.body.classList.add('alarming');setAlarmPhase('starting');
+ beginAlarmAudio(++alarmAttempt);
 }
 function stopAlarm(){
-  alarmActive=false;alarmAttempt++;clearInterval(alarmTimer);alarmTimer=null;
-  disposeAlarmNative();document.body.classList.remove('alarming');updateCountdown();
+ if(!alarmActive)return;
+ alarmActive=false;alarmAttempt++;releaseAlarmSource();
+ document.body.classList.remove('alarming');setAlarmPhase('idle');
 }
-function checkAlarm(now){if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;if(snoozeUntil){if(now.getTime()>=snoozeUntil){snoozeUntil=0;startAlarm()}return}const wanted=minuteOfDay(state.wakeTime),current=now.getHours()*60+now.getMinutes(),day=todayKey(now);if(wanted===current&&day!==lastAlarmDay){lastAlarmDay=day;startAlarm()}}
-$('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;updateCountdown();toast('Rappel dans '+state.snoozeMinutes+' min')});
+function clearSnooze(){
+ if(!alarmSchedule.snooze)return;
+ alarmSchedule.snooze=0;saveAlarmSchedule();
+}
+function syncAlarm(now=new Date()){
+ clearTimeout(alarmTimer);
+ if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;
+ if(alarmSchedule.snooze&&alarmSchedule.snooze<=now){
+  const late=now-alarmSchedule.snooze;
+  clearSnooze();
+  if(late<ALARM_RECOVERY_MS){startAlarm();return}
+ }
+ if(!alarmSchedule.snooze){
+  // The previous day can still be due just after midnight.
+  const today=dailyAlarm(now);
+  const due=today?.target>now?dailyAlarm(now,-1):today;
+  if(due&&due.key!==alarmSchedule.last&&now-due.target<ALARM_RECOVERY_MS){
+   alarmSchedule.last=due.key;saveAlarmSchedule();startAlarm();return;
+  }
+ }
+ const next=nextAlarm(now);
+ if(next)alarmTimer=setTimeout(syncAlarm,Math.max(0,next-Date.now()));
+}
+$('stopAlarm').addEventListener('click',()=>{stopAlarm();syncAlarm();toast('Alarme arrêtée')});
+$('snoozeAlarm').addEventListener('click',()=>{
+ const minutes=clamp(state.snoozeMinutes,5,10);
+ alarmSchedule.snooze=Date.now()+minutes*60000;saveAlarmSchedule();
+ stopAlarm();syncAlarm();toast('Rappel dans '+minutes+' min');
+});
 $('testAudio').addEventListener('click',playNativeTest);
 $('testWebAudio').addEventListener('click',async()=>{
  const status=$('audioTestStatus'),btn=$('testWebAudio');
@@ -873,7 +959,15 @@ $('testWebAudio').addEventListener('click',async()=>{
 $('previewSunrise').addEventListener('click',()=>{temporarySunriseUntil=Date.now()+8000;updateAdaptive();toast('Aperçu du lever de soleil · 8 s');setTimeout(updateAdaptive,8100)});
 // Keep-screen-awake is best effort only on supporting browsers; never promise iOS behavior.
 let wakeLock=null;async function manageWake(){if(wakeLock&&!state.wake){try{await wakeLock.release()}catch{}wakeLock=null}if(!state.wake){$('wakeStatus').textContent='Maintien d’écran désactivé.';return}if(!('wakeLock' in navigator)){$('wakeStatus').textContent='Maintien d’écran non pris en charge sur ce navigateur.';return}if(document.visibilityState!=='visible')return;try{if(!wakeLock||wakeLock.released)wakeLock=await navigator.wakeLock.request('screen');$('wakeStatus').textContent='Maintien d’écran actif (selon iOS).'}catch{$('wakeStatus').textContent='Impossible de maintenir l’écran éveillé (restrictions iOS).'}}
-document.addEventListener('visibilitychange',()=>{syncClockLoop();syncTheta();if(document.visibilityState==='visible'){updateWeather();manageWake()}else stopAlarm()});window.addEventListener('pageshow',()=>{syncClockLoop();manageWake()});document.addEventListener('pointerdown',()=>{if(state.wake&&!wakeLock)manageWake()},{passive:true});
+function resumeNightDial(){
+ syncClockLoop();syncAlarm();syncTheta();updateCountdown();updateMorningBrief();updateWeather();manageWake();
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState==='visible')resumeNightDial();
+ else{stopLoop();clearTimeout(alarmTimer);stopAlarm();syncTheta()}
+});
+window.addEventListener('pageshow',resumeNightDial);
+document.addEventListener('pointerdown',()=>{if(state.wake&&(!wakeLock||wakeLock.released))manageWake()},{passive:true});
 // Split-flap demonstration changes the next minute, then returns to actual time.
 $('demoFlap').addEventListener('click',()=>{if(reducedMotion()){toast('Désactive Réduire les animations pour voir les volets.');return}state.mode='flip';state.flipPro=true;render();setSheet(false);const t=new Date(Date.now()+61000);const target=timeLabel(t);demoInProgress=true;setFlaps(target,{force:true});setTimeout(()=>{demoInProgress=false;setFlaps(timeLabel(new Date()),{force:true})},1500)});
 // Three onboarding screens, stored separately to preserve v1 settings.
