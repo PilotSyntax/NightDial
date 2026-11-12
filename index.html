@@ -111,7 +111,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
-      <div class="actions"><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio">Tester le son</button></div>
+      <div class="actions"><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Le test joue trois notes au volume choisi. Monte le volume multimédia de l’iPhone.</p>
       <p class="status">Le réveil sonore Web Audio n'est pas fiable lorsque Safari est fermé, l'écran verrouillé ou l'app suspendue. Utilise toujours l'alarme native iOS pour les rendez-vous importants.</p>
     </section>
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
@@ -237,15 +237,58 @@ async function updateWeather(force=false){if(weatherBusy||!state.showWeather||(!
 $('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
 // Web Audio: sound is created by oscillators, gated behind a user gesture.
 let audioCtx=null,alarmTimer=null,alarmGain=null,alarmStarted=0,alarmActive=false,snoozeUntil=0,lastAlarmDay='',previewAudioTimer=null;
-async function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw Error('Audio non disponible');audioCtx=audioCtx||new AC();if(audioCtx.state==='suspended')await audioCtx.resume();return audioCtx.state==='running'}catch{toast('Audio non disponible : utilise l’alarme iPhone.');return false}}
-function playTone(freq=520,seconds=.14,volume=.04){if(!audioCtx||audioCtx.state!=='running')return;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),t=audioCtx.currentTime;osc.type='sine';osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(volume,t+.016);gain.gain.exponentialRampToValueAtTime(.0001,t+seconds);osc.connect(gain).connect(audioCtx.destination);osc.start(t);osc.stop(t+seconds+.02)}
+// iOS Web Audio: instantiate during a real click, then resume before playback.
+async function unlockAudio(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)throw Error('Web Audio non disponible');
+    if(!audioCtx||audioCtx.state==='closed')audioCtx=new AC();
+    if(audioCtx.state==='suspended')await audioCtx.resume();
+    if(audioCtx.state!=='running')throw Error('Contexte audio suspendu');
+    return true;
+  }catch(error){
+    $('audioTestStatus').textContent='Son indisponible : vérifie les réglages audio de Safari et de ton iPhone.';
+    toast('Impossible d’activer le son.');
+    return false;
+  }
+}
+// Schedule the chime on the audio clock; no browser timers needed for its notes.
+function playTone(freq=520,seconds=.14,volume=.04,delay=0){
+  if(!audioCtx||audioCtx.state!=='running')return false;
+  try{
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),t=audioCtx.currentTime+delay;
+    osc.type='sine';osc.frequency.setValueAtTime(freq,t);
+    gain.gain.setValueAtTime(.0001,t);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0001,volume),t+.03);
+    gain.gain.exponentialRampToValueAtTime(.0001,t+seconds);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start(t);osc.stop(t+seconds+.025);
+    osc.onended=()=>{osc.disconnect();gain.disconnect()};
+    return true;
+  }catch{return false}
+}
 function playClick(){if(!state.flipSound||!audioCtx)return;playTone(390,.055,.014)}
 function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()-alarmStarted)/120000),level=(.018+.12*growth)*clamp(state.alarmVolume,5,80)/80;playTone(490+growth*130,.5,level)}
 async function startAlarm(){if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;if(!await unlockAudio())return;alarmActive=true;alarmStarted=Date.now();document.body.classList.add('alarming');alarmPulse();alarmTimer=setInterval(alarmPulse,1550);toast('Réveil NightDial');}
 function stopAlarm(){alarmActive=false;clearInterval(alarmTimer);alarmTimer=null;document.body.classList.remove('alarming')}
 function checkAlarm(now){if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;if(snoozeUntil){if(now.getTime()>=snoozeUntil){snoozeUntil=0;startAlarm()}return}const wanted=minuteOfDay(state.wakeTime),current=now.getHours()*60+now.getMinutes(),day=todayKey(now);if(wanted===current&&day!==lastAlarmDay){lastAlarmDay=day;startAlarm()}}
 $('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;toast('Rappel dans '+state.snoozeMinutes+' min')});
-$('testAudio').addEventListener('click',async()=>{if(!await unlockAudio())return;playTone(520,.4,.07);clearTimeout(previewAudioTimer);previewAudioTimer=setTimeout(()=>playTone(660,.5,.08),500)});
+$('testAudio').addEventListener('click',async()=>{
+  const button=$('testAudio'),status=$('audioTestStatus');
+  button.disabled=true;button.textContent='Activation du son…';
+  status.textContent='Activation audio…';
+  try{
+    if(!await unlockAudio())return;
+    const volume=clamp(Number(state.alarmVolume)||30,5,80)/80;
+    const played=playTone(523.25,.38,.22*volume,0)&&
+      playTone(659.25,.38,.24*volume,.44)&&
+      playTone(783.99,.62,.26*volume,.88);
+    status.textContent=played?'Test lancé : trois notes. Monte le volume multimédia si nécessaire.':'Le son n’a pas pu être généré.';
+    if(played)toast('Test sonore déclenché');
+  }finally{
+    button.disabled=false;button.textContent='Tester le son';
+  }
+});
 $('previewSunrise').addEventListener('click',()=>{temporarySunriseUntil=Date.now()+8000;updateAdaptive();toast('Aperçu du lever de soleil · 8 s');setTimeout(updateAdaptive,8100)});
 // Keep-screen-awake is best effort only on supporting browsers; never promise iOS behavior.
 let wakeLock=null;async function manageWake(){if(wakeLock&&!state.wake){try{await wakeLock.release()}catch{}wakeLock=null}if(!state.wake){$('wakeStatus').textContent='Maintien d’écran désactivé.';return}if(!('wakeLock' in navigator)){$('wakeStatus').textContent='Maintien d’écran non pris en charge sur ce navigateur.';return}if(document.visibilityState!=='visible')return;try{if(!wakeLock||wakeLock.released)wakeLock=await navigator.wakeLock.request('screen');$('wakeStatus').textContent='Maintien d’écran actif (selon iOS).'}catch{$('wakeStatus').textContent='Impossible de maintenir l’écran éveillé (restrictions iOS).'}}
