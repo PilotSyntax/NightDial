@@ -127,6 +127,13 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Rouge profond<small>Confort visuel dans l'obscurité</small></span><input aria-label="Rouge profond" id="deepRed" type="checkbox"></div>
       <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
       <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
+       <p class="section-title">Smart Bedside · profils automatiques</p>
+       <div class="field"><span>Profil de chevet<small>Suit les heures Début et Fin ci-dessus. Le style de jour est conservé.</small></span><input type="checkbox" id="bedsideAuto" aria-label="Activer le profil de chevet automatique"></div>
+       <div class="field"><span>Cadran de nuit</span><select id="bedsideMode" aria-label="Cadran de nuit"><option value="analog">Analogique</option><option value="numeric">Numérique</option><option value="flip">Flip gare</option></select></div>
+       <div class="field"><span>Couleur de nuit</span><select id="bedsideColor" aria-label="Couleur de nuit"><option value="red">Rouge astronome</option><option value="amber">Ambre</option><option value="green">Vert</option><option value="blue">Bleu</option><option value="violet">Violet</option><option value="cyan">Cyan</option><option value="pink">Rose</option><option value="white">Blanc</option></select></div>
+       <div class="field"><span>Intensité du cadran de nuit</span><input id="bedsideBright" aria-label="Intensité du cadran de nuit" type="range" min="5" max="70" step="5" value="25"></div>
+       <div class="actions"><button type="button" id="previewBedside" class="action-secondary">Aperçu du profil nuit (8 s)</button></div>
+       <p id="bedsideStatus" class="status" role="status" aria-live="polite">Profil inactif.</p>
     </section>
     <section class="tab-panel" id="pane-alarm" role="tabpanel" aria-labelledby="tab-alarm">
       <p class="section-title">Réveil progressif</p>
@@ -176,7 +183,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 // Migration: palette names used in older versions are still recognized.
@@ -191,7 +198,7 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
 /* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
    The display is updated only when its text changes, not every animation frame. */
 function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
@@ -222,7 +229,42 @@ function updateCountdown(now=new Date()){
     'Alarme sonore activée à '+state.wakeTime+
     (ringing?', réveil en cours':', dans '+count.description));
 }
-function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();updateMorningBrief();persist();syncClockLoop()}
+/* v22 Smart Bedside: reversible presentation-only profiles. Never overwrite daytime preferences. */
+let bedsidePreviewUntil=0;
+const bedsideModes=['analog','numeric','flip'];
+function bedsideActiveFor(now=new Date()){
+  const m=now.getHours()*60+now.getMinutes();
+  return Boolean(state.bedsideAuto)&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd));
+}
+function bedsideShowing(now=new Date()){return bedsideActiveFor(now)||Date.now()<bedsidePreviewUntil}
+function bedsideModeAt(now=new Date()){
+  return bedsideShowing(now)&&bedsideModes.includes(state.bedsideMode)?state.bedsideMode:state.mode;
+}
+function bedsideAccent(now=new Date()){
+  if(bedsideShowing(now))return palettes[state.bedsideColor]||palettes.red;
+  const m=now.getHours()*60+now.getMinutes();
+  const deep=state.deepRed&&(state.manualNight||(state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd))));
+  return deep?'#aa1d20':accent();
+}
+function applyBedsideAppearance(now=new Date()){
+  const mode=bedsideModeAt(now),color=bedsideAccent(now);
+  const previous=document.body.dataset.mode;
+  document.body.dataset.mode=bedsideModes.includes(mode)?mode:'analog';
+  setVar('--accent',color);
+  setVar('--rgb',color.match(/[a-f\\d]{2}/gi).map(v=>parseInt(v,16)).join(','));
+  const status=$('bedsideStatus');
+  if(!state.bedsideAuto&&Date.now()>=bedsidePreviewUntil)status.textContent='Désactivé · Le style de jour reste inchangé.';
+  else if(bedsideShowing(now))status.textContent='Profil nuit actif · Le profil jour revient automatiquement.';
+  else status.textContent='En attente · Début '+state.nightStart+', retour au profil jour '+state.nightEnd+'.';
+  return previous!==document.body.dataset.mode;
+}
+$('previewBedside').addEventListener('click',()=>{
+  bedsidePreviewUntil=Date.now()+8000;
+  render();setSheet(false);toast('Aperçu Smart Bedside · 8 s');
+  setTimeout(()=>{bedsidePreviewUntil=0;render()},8100);
+});
+
+function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');applyBedsideAppearance();$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();updateMorningBrief();persist();syncClockLoop()}
 // Analog Swiss-station dial; all marks and numerals are generated once.
 const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
 for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
@@ -234,18 +276,18 @@ for(let i=0;i<4;i++){if(i===2){const colon=document.createElement('span');colon.
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function settle(c,value){clearTimeout(c.delay);clearTimeout(c.finish);c.token++;c.value=value;for(const p of [c.top,c.bottom,c.front,c.back])p.textContent=value;c.el.classList.remove('flipping')}
 function flipCell(c,value,delay){if(value===c.value)return;clearTimeout(c.delay);clearTimeout(c.finish);c.token++;const token=c.token;c.delay=setTimeout(()=>{if(c.token!==token)return;const old=c.value;c.value=value;c.top.textContent=value;c.bottom.textContent=old;c.front.textContent=old;c.back.textContent=value;c.el.classList.remove('flipping');void c.el.offsetWidth;c.el.classList.add('flipping');if(state.flipSound)playClick();c.finish=setTimeout(()=>{if(c.token===token)settle(c,value)},660)},delay)}
-function setFlaps(value,{force=false}={}){if(!/^\d{4}$/.test(value)||(!force&&lastFlip===value))return;const first=lastFlip==='';lastFlip=value;const animate=!first&&state.flipPro&&state.mode==='flip'&&!reducedMotion()&&document.visibilityState==='visible';cells.forEach((c,i)=>{const digit=value[i];if(!animate)settle(c,digit);else if(digit!==c.value)flipCell(c,digit,i*72)})}
+function setFlaps(value,{force=false}={}){if(!/^\d{4}$/.test(value)||(!force&&lastFlip===value))return;const first=lastFlip==='';lastFlip=value;const animate=!first&&state.flipPro&&bedsideModeAt()==='flip'&&!reducedMotion()&&document.visibilityState==='visible';cells.forEach((c,i)=>{const digit=value[i];if(!animate)settle(c,digit);else if(digit!==c.value)flipCell(c,digit,i*72)})}
 // Numeric mode animates only changed digits; an inert initial paint is cheap.
 let previousNumeric='';function setNumeric(value){if(value===previousNumeric)return;const nodes=[...document.querySelectorAll('.num-digit')];nodes.forEach((node,i)=>{if(node.textContent!==value[i]){node.textContent=value[i];if(previousNumeric&&!reducedMotion()){node.classList.remove('changed');void node.offsetWidth;node.classList.add('changed')}}});previousNumeric=value}
 let lastClockMinute=-1,clockTimeout,frameId=0,nightActive=false,temporarySunriseUntil=0,lastOledStep=-1;
 function updateAdaptive(now=new Date()){
- const m=now.getHours()*60+now.getMinutes();nightActive=!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
+ applyBedsideAppearance(now);const m=now.getHours()*60+now.getMinutes();nightActive=!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
  const baseline=clamp(state.dim,0,95)/100;let dim=nightActive?Math.max(baseline,clamp(state.nightDim,25,95)/100):baseline;
  const wake=minuteOfDay(state.wakeTime),duration=clamp(state.sunriseDuration,15,60);let sunlight=0;
  if(state.sunrise&&wake!==null){const before=(wake-m+1440)%1440,after=(m-wake+1440)%1440;if(before<=duration)sunlight=1-before/duration;else if(after<=10)sunlight=1}
  if(Date.now()<temporarySunriseUntil)sunlight=1;
  if(sunlight)dim=dim*(1-sunlight)+Math.min(baseline,.10)*sunlight;
- setVar('--bright',(clamp(state.bright,5,100)/100).toFixed(3));setVar('--dim',clamp(dim,0,.95).toFixed(3));setVar('--sunrise',(sunlight*.88).toFixed(3));setVar('--sunrise-daylight',Math.pow(sunlight,3).toFixed(3));
+ setVar('--bright',(clamp(bedsideShowing(now)?state.bedsideBright:state.bright,5,100)/100).toFixed(3));setVar('--dim',clamp(dim,0,.95).toFixed(3));setVar('--sunrise',(sunlight*.88).toFixed(3));setVar('--sunrise-daylight',Math.pow(sunlight,3).toFixed(3));
  document.body.classList.toggle('minimal',((!!state.nightMinimal&&nightActive)||state.theme==='minimal')&&!sunlight&&!sheetOpen);
  if(state.deepRed){const color=nightActive?'#aa1d20':accent();if(root.style.getPropertyValue('--accent')!==color){setVar('--accent',color);setVar('--rgb',color.match(/[a-f\d]{2}/gi).map(x=>parseInt(x,16)).join(','))}}
  const step=state.oledShift&&document.visibilityState==='visible'?Math.floor(now.getTime()/120000):-1;if(step!==lastOledStep){lastOledStep=step;const positions=[[0,0],[2,-2],[-1,2],[-2,-1],[1,1]];const [x,y]=step<0?[0,0]:positions[step%positions.length];setVar('--shift-x',x+'px');setVar('--shift-y',y+'px')}
@@ -256,11 +298,11 @@ function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),min
  pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
  const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
  setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
- const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
+ const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});const oldMode=document.body.dataset.mode;updateAdaptive(now);if(oldMode!==document.body.dataset.mode&&state.seconds)setTimeout(syncClockLoop,0);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
 }
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
-function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
-function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&state.mode==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
+function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||bedsideModeAt()!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
+function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&bedsideModeAt()==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
 
 /* v19.1: motion starts from the user's real resting orientation (not a fixed 45°).
    Two sensor APIs, explicit permission, automatic pause and a sensor-free demo. */
@@ -407,9 +449,9 @@ tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.ad
 for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
-for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
+for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
