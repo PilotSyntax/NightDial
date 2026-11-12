@@ -142,8 +142,9 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
        <div class="field"><span>Compte à rebours<small>Temps restant jusqu’au prochain réveil · près de l’alarme</small></span><input aria-label="Afficher le temps restant avant le réveil" id="showCountdown" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
+       <div class="field"><span>Sonnerie du réveil<small>Trois mélodies originales, générées sur l’appareil</small></span><select id="alarmMelody" aria-label="Sonnerie du réveil"><option value="zen">Zen · cloche douce</option><option value="nature">Nature · oiseaux synthétiques</option><option value="digital">Digital · impulsions claires</option></select></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
-      <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son (iPhone)</button><button class="action-secondary" id="testWebAudio" type="button">Diagnostic Web Audio</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Test iPhone : son audio natif généré localement. Le diagnostic Web Audio teste séparément les oscillateurs. Vérifie aussi la sortie audio et le mode silencieux.</p>
+      <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son (iPhone)</button><button class="action-secondary" id="previewMelody" type="button">Écouter la sonnerie</button><button class="action-secondary" id="testWebAudio" type="button">Diagnostic Web Audio</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Test iPhone : son audio natif généré localement. Le diagnostic Web Audio teste séparément les oscillateurs. Vérifie aussi la sortie audio et le mode silencieux.</p>
       <p class="status">Le réveil sonore Web Audio n'est pas fiable lorsque Safari est fermé, l'écran verrouillé ou l'app suspendue. Utilise toujours l'alarme native iOS pour les rendez-vous importants.</p>
     </section>
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
@@ -183,7 +184,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,alarmMelody:'zen',snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 // Migration: palette names used in older versions are still recognized.
@@ -198,7 +199,7 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','alarmMelody','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
 /* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
    The display is updated only when its text changes, not every animation frame. */
 function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
@@ -450,7 +451,7 @@ for(const [name,color] of Object.entries(palettes)){const b=document.createEleme
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
 for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
 for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
@@ -608,10 +609,125 @@ function playTone(freq=520,seconds=.14,volume=.04,delay=0){
     return true;
   }catch{return false}
 }
+
+/* v23: native iOS-compatible alarm engine. WAV files include a gain ramp in the
+   PCM samples because iOS Safari does not reliably honor HTMLMediaElement.volume.
+   Automatic playback still depends on Safari policies: no background guarantee. */
+let alarmNativeAudio=null,alarmNativeUrl=null,alarmAttempt=0,melodyPreview=null,melodyPreviewUrl=null;
+const melodyNames={zen:'Zen',nature:'Nature',digital:'Digital'};
+function normalizeMelody(value){return Object.hasOwn(melodyNames,value)?value:'zen'}
+function melodySample(t,kind){
+  const tone=(f,time)=>Math.sin(2*Math.PI*f*time);
+  if(kind==='digital'){
+    const beat=t%2.4,step=Math.floor(beat/.4);
+    if(beat>=1.6)return 0;
+    const freq=[440,554.37,659.25,880][step%4];
+    const local=beat% .4,env=Math.min(1,local/.013)*Math.exp(-local*9);
+    return (.65*tone(freq,t)+.20*tone(freq*2,t))*env;
+  }
+  if(kind==='nature'){
+    const phase=t%4.8;
+    const bird=(center,base)=>{
+      const dt=phase-center;
+      if(dt<0||dt>.42)return 0;
+      const envelope=Math.sin(Math.PI*dt/.42)**2;
+      const freq=base+280*Math.sin(Math.PI*dt/.42);
+      return Math.sin(2*Math.PI*(base*dt+280*.42/Math.PI*(1-Math.cos(Math.PI*dt/.42))))*envelope;
+    };
+    return bird(.4,980)*.48+bird(1.18,1300)*.34+bird(2.5,1120)*.30;
+  }
+  // Zen: soft bell chords with tapered decay and no abrupt looping clicks.
+  const beat=t%6.0,notes=[392,523.25,659.25];
+  let out=0;
+  for(let i=0;i<3;i++){
+    const x=beat-i*1.15;
+    if(x>=0&&x<2.9){
+      const envelope=Math.min(1,x/.035)*Math.exp(-x*1.45);
+      out+=(tone(notes[i],t)+.22*tone(notes[i]*2,t))*envelope*.45;
+    }
+  }
+  return out;
+}
+function makeMelodyWav(kind='zen',duration=4,volume=.6,progressive=false){
+  kind=normalizeMelody(kind);
+  const rate=16000,frames=Math.floor(duration*rate),v=new DataView(new ArrayBuffer(44+frames*2));
+  const write=(start,txt)=>{for(let j=0;j<txt.length;j++)v.setUint8(start+j,txt.charCodeAt(j))};
+  write(0,'RIFF');v.setUint32(4,36+frames*2,true);write(8,'WAVE');write(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  write(36,'data');v.setUint32(40,frames*2,true);
+  for(let i=0;i<frames;i++){
+    const t=i/rate;
+    // Embedded fade-in: 8% of selected maximum at start, full within 90 s.
+    const ramp=progressive?.08+.92*Math.min(1,t/90):1;
+    const fade=Math.min(1,t/.035,Math.max(0,(duration-t)/.06));
+    const raw=melodySample(t,kind)*volume*ramp*fade*.78;
+    v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,raw))*32767),true);
+  }
+  return new Blob([v.buffer],{type:'audio/wav'});
+}
+function disposeMelodyPreview(){
+  if(melodyPreview){melodyPreview.pause();melodyPreview.removeAttribute('src');melodyPreview.load();melodyPreview=null}
+  if(melodyPreviewUrl){URL.revokeObjectURL(melodyPreviewUrl);melodyPreviewUrl=null}
+}
+function previewAlarmMelody(){
+  // Direct user gesture is required for Safari to start playback.
+  disposeMelodyPreview();stopNativeTest();setPlaybackAudioSession();
+  const status=$('audioTestStatus'),button=$('previewMelody'),kind=normalizeMelody(state.alarmMelody);
+  try{
+    melodyPreviewUrl=URL.createObjectURL(makeMelodyWav(kind,5,.35+clamp(state.alarmVolume,5,80)/80*.40,false));
+    const audio=new Audio(melodyPreviewUrl);melodyPreview=audio;audio.preload='auto';
+    button.disabled=true;audio.onplaying=()=>{status.textContent='Sonnerie '+melodyNames[kind]+' : lecture sur iPhone.'};
+    audio.onended=()=>{if(melodyPreview===audio){button.disabled=false;status.textContent='Aperçu '+melodyNames[kind]+' terminé.'}};
+    audio.onerror=()=>{button.disabled=false;status.textContent='Aperçu indisponible : erreur du lecteur iPhone.'};
+    const result=audio.play();
+    if(result?.catch)result.catch(error=>{if(melodyPreview===audio){button.disabled=false;status.textContent='Safari a bloqué cet aperçu : '+(error?.name||'lecture refusée')}});
+    setTimeout(()=>{if(melodyPreview===audio)button.disabled=false},7000);
+  }catch(error){button.disabled=false;status.textContent='Impossible de générer la sonnerie : '+(error?.message||'erreur')}
+}
+function disposeAlarmNative(){
+  if(alarmNativeAudio){alarmNativeAudio.pause();alarmNativeAudio.removeAttribute('src');alarmNativeAudio.load();alarmNativeAudio=null}
+  if(alarmNativeUrl){URL.revokeObjectURL(alarmNativeUrl);alarmNativeUrl=null}
+}
+function alarmAudioFailed(reason){
+  $('audioTestStatus').textContent='Réveil : lecture bloquée ('+reason+'). Ouvre Safari et utilise l’alarme native iOS comme secours.';
+  toast('Son du réveil bloqué par iOS');
+}
+function beginAlarmAudio(attempt){
+  setPlaybackAudioSession();
+  disposeMelodyPreview();stopNativeTest();
+  try{
+    const kind=normalizeMelody(state.alarmMelody);
+    const level=Math.min(.85, .25+clamp(state.alarmVolume,5,80)/80*.55);
+    alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,120,level,true));
+    const audio=new Audio(alarmNativeUrl);alarmNativeAudio=audio;audio.preload='auto';
+    audio.loop=true;
+    audio.onerror=()=>{if(attempt===alarmAttempt)alarmAudioFailed('erreur média '+(audio.error?.code||'?'))};
+    // This may be rejected without an iOS user gesture. Do not claim success early.
+    const result=audio.play();
+    if(result?.then)result.then(()=>{if(attempt===alarmAttempt)$('audioTestStatus').textContent='Réveil '+melodyNames[kind]+' : lecture lancée (visibilité iOS requise).'}).catch(e=>{
+      if(attempt===alarmAttempt)alarmAudioFailed(e?.name||'autorisation manquante');
+    });
+    return true;
+  }catch(error){
+    if(attempt===alarmAttempt)alarmAudioFailed(error?.message||'erreur du lecteur');
+    return false;
+  }
+}
+$('previewMelody').addEventListener('click',previewAlarmMelody);
 function playClick(){if(!state.flipSound||!audioCtx)return;playTone(390,.055,.014)}
 function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()-alarmStarted)/120000),level=(.018+.12*growth)*clamp(state.alarmVolume,5,80)/80;playTone(490+growth*130,.5,level)}
-async function startAlarm(){if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;if(!await unlockAudio())return;alarmActive=true;alarmStarted=Date.now();document.body.classList.add('alarming');alarmPulse();alarmTimer=setInterval(alarmPulse,1550);toast('Réveil NightDial');}
-function stopAlarm(){alarmActive=false;clearInterval(alarmTimer);alarmTimer=null;document.body.classList.remove('alarming')}
+function startAlarm(){
+  if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;
+  alarmActive=true;alarmStarted=Date.now();alarmAttempt++;
+  document.body.classList.add('alarming');updateCountdown();
+  toast('Réveil NightDial · '+melodyNames[normalizeMelody(state.alarmMelody)]);
+  beginAlarmAudio(alarmAttempt);
+}
+function stopAlarm(){
+  alarmActive=false;alarmAttempt++;clearInterval(alarmTimer);alarmTimer=null;
+  disposeAlarmNative();document.body.classList.remove('alarming');updateCountdown();
+}
 function checkAlarm(now){if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;if(snoozeUntil){if(now.getTime()>=snoozeUntil){snoozeUntil=0;startAlarm()}return}const wanted=minuteOfDay(state.wakeTime),current=now.getHours()*60+now.getMinutes(),day=todayKey(now);if(wanted===current&&day!==lastAlarmDay){lastAlarmDay=day;startAlarm()}}
 $('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;updateCountdown();toast('Rappel dans '+state.snoozeMinutes+' min')});
 $('testAudio').addEventListener('click',playNativeTest);
