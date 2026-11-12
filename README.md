@@ -76,3 +76,12 @@ Dans **Réglages → Réveil**, choisissez la **Sonnerie du réveil** : Zen (clo
 **Limitation critique iOS** : l'autorisation de lecture lors d'un clic ne garantit **pas** qu'une lecture automatique sera autorisée plus tard. Safari peut bloquer la lecture sans geste récent et suspendre la page si l'écran est verrouillé ou l'application en arrière-plan. NightDial n'est pas un remplacement fiable de l'alarme native iPhone. Utilisez toujours l'application Horloge d'iOS pour les réveils importants.
 
 Aucun fichier de musique ou accès distant n'est nécessaire ; les trois sonneries sont générées par synthèse dans le navigateur et les préférences restent sous `nightdial-v1`.
+
+
+## v24 — Theta Sleep (ondes binaurales optionnelles)
+
+Dans **Réglages → Nuit → Theta Sleep**, activez les battements binauraux stéréo lorsque le **mode nuit** (manuel ou programmé) est en vigueur. Choisissez un écart de fréquence de **4, 6 ou 8 Hz**, un volume limité (**5–35 %**) et une minuterie de **15, 30 ou 60 minutes**. NightDial génère un signal stéréo hors ligne de **220 Hz à gauche** et **224/226/228 Hz à droite** ; l'écart peut créer une perception de pulsation binaurale. Un **casque stéréo** est nécessaire à cette perception. L'audio démarre uniquement après un geste explicite et l'option est désactivée par défaut, y compris au rechargement.
+
+La lecture tente de continuer pendant que l'écran NightDial reste ouvert, mais **Safari/iOS peut l'interrompre en arrière-plan, lors du verrouillage de l'écran ou d'un changement de sortie audio**. Les réglages peuvent être ajustés pendant la lecture. Le moteur s'arrête automatiquement à la fin de la minuterie, à la sortie du mode nuit ou au déclenchement du réveil. Le lecteur signale les blocages et interruptions détectés.
+
+**Aucune efficacité clinique sur l'endormissement n'est garantie** : les preuves concernant les battements binauraux et le sommeil sont limitées. Gardez un volume bas, arrêtez si l'écoute est inconfortable, et privilégiez un casque confortable plutôt que de dormir avec un équipement qui gêne.
