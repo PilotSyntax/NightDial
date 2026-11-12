@@ -56,3 +56,12 @@ Sur Safari iOS : activez « Parallaxe 3D », puis acceptez la demande d'accès a
 Économie d'énergie et accessibilité : le suivi des capteurs est suspendu dès que NightDial est masqué, que les réglages sont ouverts, que l'option est désactivée ou que « Réduire les animations » est activé. La projection est limitée à quelques pixels et degrés, et les mises à jour graphiques sont plafonnées à 20 Hz. Les préférences continuent d'être stockées sous la clé historique `nightdial-v1`.
 
 La parallaxe reste une animation visuelle facultative et n'affecte pas le réveil, la luminosité système, ni la fonction de protection OLED.
+
+
+## v22 — Smart Bedside
+
+Dans **Réglages → Nuit → Smart Bedside**, activez le **profil de chevet** pour appliquer automatiquement un cadran, une couleur et une intensité distincts pendant la plage **Début / Fin** configurée dans l'onglet Nuit (par défaut 22:00–07:00). Choisissez parmi analogique, numérique et Flip gare, parmi les huit couleurs, et réglez l'intensité de 5 à 70 %. Le bouton **Aperçu du profil nuit (8 s)** permet de tester la présentation sans attendre la nuit.
+
+Le profil ne modifie **jamais** les réglages de jour sauvegardés (`mode`, `color`, `bright`), et ceux-ci reviennent automatiquement à la fin de la plage, même après un passage à minuit. La fonction est désactivée par défaut et les anciennes préférences restent dans `nightdial-v1`. L'atténuation nocturne, le réveil, NightDial Motion, Sleep Countdown, Morning Briefing et les trois cadrans restent accessibles.
+
+Les bascules ne peuvent se produire que lorsque la PWA est ouverte/visible ou à sa reprise : Safari ne garantit aucune exécution en arrière-plan.
