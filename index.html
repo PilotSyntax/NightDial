@@ -74,6 +74,9 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
 #alarmIndicator{position:absolute;z-index:2;top:calc(18px + env(safe-area-inset-top));right:calc(18px + env(safe-area-inset-right));display:inline-flex;align-items:center;gap:7px;color:var(--accent);opacity:.72;font-size:clamp(12px,2.7vw,15px);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.025em;filter:brightness(var(--bright));transition:opacity 250ms,color 250ms}
 #alarmIndicator[hidden]{display:none!important}
 #alarmIndicator svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#alarmIndicator .alarm-time{font-weight:500}
+#alarmCountdown{font-size:clamp(11px,2.5vw,13px);font-weight:400;color:var(--accent);opacity:.84;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:0;border-left:1px solid currentColor;padding-left:8px}
+#alarmCountdown[hidden]{display:none!important}
 @media(orientation:landscape){#alarmIndicator{top:calc(12px + env(safe-area-inset-top));right:calc(15px + env(safe-area-inset-right))}}
 
 /* v19.2 diagnostics: unmistakable sensor-free 3D demonstration. */
@@ -91,7 +94,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
   <main id="clockStage" tabindex="0" role="application" aria-label="NightDial. Balayer horizontalement pour changer l'horloge, verticalement pour ajuster la luminosité. Double toucher pour le mode nuit. Toucher pour ouvrir les réglages.">
     <div id="alarmIndicator" role="status" aria-label="Alarme activée" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4.5l3 2M4.8 4.8 2.5 7.1M19.2 4.8l2.3 2.3M8 21h8"/></svg>
-      <time id="alarmIndicatorTime"></time>
+      <time id="alarmIndicatorTime" class="alarm-time"></time><span id="alarmCountdown" aria-hidden="true" hidden></span>
     </div>
     <div id="clockVisual">
       <div id="analog" class="mode" aria-label="Horloge analogique"><svg viewBox="0 0 400 400" role="img" aria-label="Cadran suisse"><circle class="clock-rim" cx="200" cy="200" r="196"/><g id="ticks"></g><g id="hours"></g><line class="hand hour-hand" id="handHour" x1="200" y1="213" x2="200" y2="113"/><line class="hand minute-hand" id="handMinute" x1="200" y1="218" x2="200" y2="66"/><line class="hand second-hand" id="handSecond" x1="200" y1="236" x2="200" y2="55"/><circle class="hub" cx="200" cy="200" r="5"/></svg></div>
@@ -126,6 +129,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <p class="section-title">Réveil progressif</p>
       <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div><div class="field"><span>Heure du réveil</span><input aria-label="Heure du réveil" id="wakeTime" type="time"></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
       <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
+       <div class="field"><span>Compte à rebours<small>Temps restant jusqu’au prochain réveil · près de l’alarme</small></span><input aria-label="Afficher le temps restant avant le réveil" id="showCountdown" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
       <div class="actions"><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Le test joue trois notes au volume choisi. Monte le volume multimédia de l’iPhone.</p>
@@ -168,7 +172,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 // Migration: palette names used in older versions are still recognized.
@@ -183,8 +187,38 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
-function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateAdaptive();persist();syncClockLoop()}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+/* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
+   The display is updated only when its text changes, not every animation frame. */
+function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
+  const mins=minuteOfDay(wake);
+  if(mins===null)return null;
+  const target=new Date(now.getTime());
+  target.setHours(Math.floor(mins/60),mins%60,0,0);
+  if(target.getTime()<=now.getTime())target.setDate(target.getDate()+1);
+  const next=snooze>now.getTime()?new Date(snooze):target;
+  const total=Math.max(0,Math.ceil((next.getTime()-now.getTime())/60000));
+  const h=Math.floor(total/60),m=total%60;
+  return {text:h?h+' h '+String(m).padStart(2,'0'):'0 h '+String(m).padStart(2,'0'),
+    description:h?h+' heure'+(h>1?'s':'')+' et '+m+' minute'+(m>1?'s':''):m+' minute'+(m>1?'s':''),
+    next};
+}
+function updateCountdown(now=new Date()){
+  const active=Boolean(state.soundAlarm);
+  const visible=active&&Boolean(state.showCountdown);
+  const node=$('alarmCountdown');
+  node.hidden=!visible;
+  if(!visible){node.textContent='';return}
+  const count=remainingToWake(now,state.wakeTime,typeof snoozeUntil==='number'?snoozeUntil:0);
+  if(!count){node.hidden=true;return}
+  const ringing=typeof alarmActive==='boolean'&&alarmActive;
+  const value=ringing?'En cours':count.text;
+  if(node.textContent!==value)node.textContent=value;
+  $('alarmIndicator').setAttribute('aria-label',
+    'Alarme sonore activée à '+state.wakeTime+
+    (ringing?', réveil en cours':', dans '+count.description));
+}
+function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();persist();syncClockLoop()}
 // Analog Swiss-station dial; all marks and numerals are generated once.
 const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
 for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
@@ -218,7 +252,7 @@ function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),min
  pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
  const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
  setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
- const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now)}
+ const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});updateAdaptive(now);checkAlarm(now);updateCountdown(now)}
 }
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
 function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
@@ -371,7 +405,7 @@ $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.t
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
 for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
 for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
@@ -422,7 +456,7 @@ function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()
 async function startAlarm(){if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;if(!await unlockAudio())return;alarmActive=true;alarmStarted=Date.now();document.body.classList.add('alarming');alarmPulse();alarmTimer=setInterval(alarmPulse,1550);toast('Réveil NightDial');}
 function stopAlarm(){alarmActive=false;clearInterval(alarmTimer);alarmTimer=null;document.body.classList.remove('alarming')}
 function checkAlarm(now){if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;if(snoozeUntil){if(now.getTime()>=snoozeUntil){snoozeUntil=0;startAlarm()}return}const wanted=minuteOfDay(state.wakeTime),current=now.getHours()*60+now.getMinutes(),day=todayKey(now);if(wanted===current&&day!==lastAlarmDay){lastAlarmDay=day;startAlarm()}}
-$('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;toast('Rappel dans '+state.snoozeMinutes+' min')});
+$('stopAlarm').addEventListener('click',()=>{stopAlarm();toast('Alarme arrêtée')});$('snoozeAlarm').addEventListener('click',()=>{stopAlarm();snoozeUntil=Date.now()+clamp(state.snoozeMinutes,5,10)*60000;updateCountdown();toast('Rappel dans '+state.snoozeMinutes+' min')});
 $('testAudio').addEventListener('click',async()=>{
   const button=$('testAudio'),status=$('audioTestStatus');
   button.disabled=true;button.textContent='Activation du son…';
