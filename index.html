@@ -27,7 +27,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
 #sunriseLayer{position:fixed;inset:0;pointer-events:none;opacity:var(--sunrise);background:linear-gradient(to top,rgba(255,171,82,.68),rgba(221,82,70,.24) 35%,rgba(71,42,98,.1) 70%,transparent);transition:opacity 35s linear;will-change:opacity}
 #sunriseLayer::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(255,234,191,.75),rgba(255,203,143,.21) 54%,rgba(255,226,194,.05));opacity:var(--sunrise-daylight,0);transition:opacity 35s linear}
 #clockStage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(14px,2.6vh,32px);padding:calc(22px + env(safe-area-inset-top)) calc(17px + env(safe-area-inset-right)) calc(26px + env(safe-area-inset-bottom)) calc(17px + env(safe-area-inset-left));touch-action:none;cursor:default;outline:none}
-#clockVisual{display:flex;align-items:center;justify-content:center;width:100%;min-height:0;max-height:80%;filter:brightness(var(--bright));opacity:calc(1 - var(--dim));transform:translate(var(--shift-x),var(--shift-y)) scale(var(--scale));transition:opacity 300ms,filter 350ms,transform 2s ease}
+#clockVisual{display:flex;align-items:center;justify-content:center;width:100%;min-height:0;max-height:80%;filter:brightness(var(--bright));opacity:calc(1 - var(--dim));transform:translate(calc(var(--shift-x) + var(--motion-x,0px)),calc(var(--shift-y) + var(--motion-y,0px))) perspective(950px) rotateX(var(--motion-rx,0deg)) rotateY(var(--motion-ry,0deg)) scale(var(--scale));transform-style:preserve-3d;transition:opacity 300ms,filter 350ms,transform 180ms ease-out}
 .mode{display:none;max-width:100%}body[data-mode="analog"] #analog,body[data-mode="numeric"] #numeric,body[data-mode="flip"] #flip{display:flex}
 #analog{width:min(87vw,67dvh,600px);aspect-ratio:1;align-items:center;justify-content:center}#analog svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 12px rgba(var(--rgb),.14))}
 .clock-rim{fill:#000;stroke:var(--accent);stroke-opacity:.32;stroke-width:1.3}.clock-tick{stroke:var(--accent);stroke-linecap:round;stroke-opacity:.66}.clock-hour{font-size:27px;font-weight:300;fill:var(--accent);dominant-baseline:middle;text-anchor:middle;letter-spacing:-.03em}.hand{stroke:var(--accent);stroke-linecap:round;filter:drop-shadow(2px 3px 3px #000b)}.hour-hand{stroke-width:8}.minute-hand{stroke-width:4}.second-hand{stroke-width:1.6}.hub{fill:var(--accent)}
@@ -126,6 +126,11 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
       <p class="section-title">Affichage et énergie</p>
       <div class="field"><span>Protection OLED<small>Déplacement subtil toutes les 2 min</small></span><input aria-label="Protection OLED" id="oledShift" type="checkbox"></div>
+       <p class="section-title">NightDial Motion · 3D</p>
+       <div class="field"><span>Parallaxe 3D<small>Désactivée par défaut · Capteur seulement sur l’horloge</small></span><input aria-label="Activer la parallaxe 3D" id="motion" type="checkbox"></div>
+       <div class="field"><span>Intensité 3D<small>Faible amplitude, consommation limitée</small></span><input aria-label="Intensité de la parallaxe 3D" id="motionIntensity" type="range" min="1" max="10" step="1" value="3"></div>
+       <div class="actions"><button type="button" id="motionPermission" class="action-secondary">Autoriser les mouvements</button></div>
+       <p id="motionStatus" class="status" role="status" aria-live="polite">Désactivé · Aucun capteur utilisé.</p>
       <div class="field"><span>Trotteuse fluide<small>Animation réduite si désactivée</small></span><input aria-label="Trotteuse fluide" id="seconds" type="checkbox"></div>
       <div class="field"><span>Animation des volets</span><input aria-label="Animation des volets" id="flipPro" type="checkbox"></div>
       <div class="field"><span>Clic mécanique<small>Audio après interaction</small></span><input aria-label="Clic mécanique" id="flipSound" type="checkbox"></div>
@@ -154,7 +159,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 // Migration: palette names used in older versions are still recognized.
@@ -169,8 +174,8 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
-function render(){const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateAdaptive();persist();syncClockLoop()}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','snoozeMinutes','motionIntensity'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');document.body.dataset.mode=['analog','numeric','flip'].includes(state.mode)?state.mode:'analog';const color=(state.deepRed&&(nightActive||state.manualNight))?'#aa1d20':accent();setVar('--accent',color);const n=color.match(/[a-f\d]{2}/gi);setVar('--rgb',n.map(x=>parseInt(x,16)).join(','));$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateAdaptive();persist();syncClockLoop()}
 // Analog Swiss-station dial; all marks and numerals are generated once.
 const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
 for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
@@ -209,9 +214,68 @@ function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),min
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
 function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
 function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&state.mode==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
+
+/* v19 NightDial Motion: opt-in parallax with passive sensor input. No background polling. */
+let motionPermissionGranted=false,motionListening=false,motionFrame=0,motionLastFrame=0,motionSample=null;
+const motionSupported=typeof window.DeviceOrientationEvent!=='undefined';
+const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
+function motionStatus(message){$('motionStatus').textContent=message}
+function resetMotion(){
+  if(motionFrame){cancelAnimationFrame(motionFrame);motionFrame=0}
+  motionSample=null;motionLastFrame=0;
+  for(const [name,val] of [['--motion-x','0px'],['--motion-y','0px'],['--motion-rx','0deg'],['--motion-ry','0deg']])setVar(name,val);
+}
+function motionUsable(){return !!state.motion&&motionPermissionGranted&&!motionPreference.matches&&document.visibilityState==='visible'&&!sheetOpen}
+function motionPaint(timestamp){
+  motionFrame=0;
+  if(!motionUsable()||!motionSample){resetMotion();return}
+  // Cap updates at 20 fps; compositor/CSS smoothly interpolates between samples.
+  if(timestamp-motionLastFrame<50)return;
+  motionLastFrame=timestamp;
+  const {beta,gamma}=motionSample,strength=clamp(Number(state.motionIntensity)||3,1,10)/10;
+  const x=clamp(gamma,-30,30)/30,y=clamp(beta-45,-35,35)/35;
+  setVar('--motion-x',(x*strength*9).toFixed(2)+'px');
+  setVar('--motion-y',(y*strength*6).toFixed(2)+'px');
+  setVar('--motion-rx',(-y*strength*5).toFixed(2)+'deg');
+  setVar('--motion-ry',(x*strength*7).toFixed(2)+'deg');
+}
+function onDeviceOrientation(event){
+  if(!motionUsable()||!Number.isFinite(event.beta)||!Number.isFinite(event.gamma))return;
+  motionSample={beta:event.beta,gamma:event.gamma};
+  if(!motionFrame)motionFrame=requestAnimationFrame(motionPaint);
+}
+function syncMotion(){
+  const active=motionUsable()&&motionSupported;
+  if(active&&!motionListening){window.addEventListener('deviceorientation',onDeviceOrientation,{passive:true});motionListening=true}
+  else if(!active&&motionListening){window.removeEventListener('deviceorientation',onDeviceOrientation);motionListening=false}
+  if(!active)resetMotion();
+  if(!state.motion)motionStatus('Désactivé · Aucun capteur utilisé.');
+  else if(motionPreference.matches)motionStatus('Pause : Réduire les animations est activé sur cet appareil.');
+  else if(!motionSupported)motionStatus('Capteur de mouvement indisponible.');
+  else if(!motionPermissionGranted)motionStatus('Autorisation de mouvement nécessaire.');
+  else if(document.visibilityState!=='visible'||sheetOpen)motionStatus('En pause · Reprend à la fermeture des réglages.');
+  else motionStatus('Actif · Incline légèrement l’iPhone.');
+}
+async function requestMotionAccess(){
+  if(!state.motion||!motionSupported||motionPreference.matches){syncMotion();return}
+  try{
+    const orientation=window.DeviceOrientationEvent;
+    if(typeof orientation.requestPermission==='function'){
+      // Directly invoked from click/change before the first await (iOS requirement).
+      const permission=await orientation.requestPermission();
+      if(permission!=='granted'){motionPermissionGranted=false;motionStatus('Autorisation refusée. Vérifie les réglages Safari.');return}
+    }
+    motionPermissionGranted=true;syncMotion();
+  }catch{motionPermissionGranted=false;motionStatus('Autorisation impossible. Réessaie dans Safari.')}
+}
+$('motionPermission').addEventListener('click',requestMotionAccess);
+if(typeof motionPreference.addEventListener==='function')motionPreference.addEventListener('change',syncMotion);
+else if(typeof motionPreference.addListener==='function')motionPreference.addListener(syncMotion);
+document.addEventListener('visibilitychange',syncMotion);
+
 // User gesture controls: pointer events prevent synthetic touch-click conflicts.
 let sheetOpen=false,gesture=null,lastTap=0,tapTimer;
-function setSheet(open){sheetOpen=open;$('sheet').classList.toggle('open',open);$('sheet').setAttribute('aria-hidden',String(!open));$('sheet').inert=!open;$('scrim').classList.toggle('visible',open);$('scrim').setAttribute('aria-hidden',String(!open));updateAdaptive();if(open){syncControls();$('closeSheet').focus()}else $('clockStage').focus({preventScroll:true})}
+function setSheet(open){sheetOpen=open;$('sheet').classList.toggle('open',open);$('sheet').setAttribute('aria-hidden',String(!open));$('sheet').inert=!open;$('scrim').classList.toggle('visible',open);$('scrim').setAttribute('aria-hidden',String(!open));updateAdaptive();syncMotion();if(open){syncControls();$('closeSheet').focus()}else $('clockStage').focus({preventScroll:true})}
 function changeMode(direction){const modes=['analog','numeric','flip'];const i=Math.max(0,modes.indexOf(state.mode));state.mode=modes[(i+direction+3)%3];render();toast(({analog:'Analogique',numeric:'Numérique',flip:'Gare'})[state.mode])}
 function toggleNight(){state.manualNight=!state.manualNight;render();toast(state.manualNight?'Mode nuit manuel':'Mode nuit automatique')}
 $('clockStage').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;gesture={x:e.clientX,y:e.clientY,id:e.pointerId};});
@@ -228,9 +292,9 @@ tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.ad
 for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
-for(const id of ['bright','dim','nightDim','alarmVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
+for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
 for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio()});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
