@@ -45,3 +45,14 @@ La **ville** apparaît à côté de la température lorsque la géolocalisation 
 Fonctions v14 conservées : horaires nocturnes, atténuation, micro-déplacement OLED, lever de soleil visuel et son aperçu, Wake Lock (selon iOS), swipe entre trois modes, huit couleurs et stockage local des préférences (`nightdial-v1`).
 
 **Attention :** les effets visuels n'empêchent pas le verrouillage imposé par iOS et ne remplacent pas une alarme native fiable.
+
+
+## v19 — NightDial Motion
+
+Le mode **Motion** (Options → Avancé) ajoute un effet de parallaxe 3D très subtil à l'horloge. Il est **désactivé par défaut**, avec un réglage d'intensité de 1 à 10 (valeur initiale : 3).
+
+Sur Safari iOS : activez « Parallaxe 3D », puis acceptez la demande d'accès aux capteurs déclenchée par l'interaction ou appuyez sur « Autoriser les mouvements ». Le navigateur peut refuser l'accès et certains appareils ne possèdent pas le capteur.
+
+Économie d'énergie et accessibilité : le suivi des capteurs est suspendu dès que NightDial est masqué, que les réglages sont ouverts, que l'option est désactivée ou que « Réduire les animations » est activé. La projection est limitée à quelques pixels et degrés, et les mises à jour graphiques sont plafonnées à 20 Hz. Les préférences continuent d'être stockées sous la clé historique `nightdial-v1`.
+
+La parallaxe reste une animation visuelle facultative et n'affecte pas le réveil, la luminosité système, ni la fonction de protection OLED.
