@@ -129,7 +129,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
        <p class="section-title">NightDial Motion · 3D</p>
        <div class="field"><span>Parallaxe 3D<small>Désactivée par défaut · Capteur seulement sur l’horloge</small></span><input aria-label="Activer la parallaxe 3D" id="motion" type="checkbox"></div>
        <div class="field"><span>Intensité 3D<small>Faible amplitude, consommation limitée</small></span><input aria-label="Intensité de la parallaxe 3D" id="motionIntensity" type="range" min="1" max="10" step="1" value="3"></div>
-       <div class="actions"><button type="button" id="motionPermission" class="action-secondary">Autoriser les mouvements</button></div>
+       <div class="actions"><button type="button" id="motionPermission" class="action-secondary">Autoriser les mouvements</button><button type="button" id="motionDemo" class="action-secondary">Tester la 3D</button></div>
        <p id="motionStatus" class="status" role="status" aria-live="polite">Désactivé · Aucun capteur utilisé.</p>
       <div class="field"><span>Trotteuse fluide<small>Animation réduite si désactivée</small></span><input aria-label="Trotteuse fluide" id="seconds" type="checkbox"></div>
       <div class="field"><span>Animation des volets</span><input aria-label="Animation des volets" id="flipPro" type="checkbox"></div>
@@ -215,63 +215,125 @@ function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);fra
 function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||state.mode!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
 function syncClockLoop(){stopLoop();updateClock();if(state.seconds&&state.mode==='analog'&&document.visibilityState==='visible'){frameId=requestAnimationFrame(analogFrame)}else{const interval=state.seconds?1000:60000-Date.now()%60000+30;clockTimeout=setTimeout(syncClockLoop,interval)}}
 
-/* v19 NightDial Motion: opt-in parallax with passive sensor input. No background polling. */
-let motionPermissionGranted=false,motionListening=false,motionFrame=0,motionLastFrame=0,motionSample=null;
-const motionSupported=typeof window.DeviceOrientationEvent!=='undefined';
+/* v19.1: motion starts from the user's real resting orientation (not a fixed 45°).
+   Two sensor APIs, explicit permission, automatic pause and a sensor-free demo. */
+let motionPermissionGranted=false,motionListening=false,motionFrame=0,motionLastFrame=0;
+let motionSample=null,motionZero=null,motionSensorCount=0,motionWatchdog=null,motionDemoActive=false,motionDemoTimers=[];
+const motionSupported=!!(window.DeviceOrientationEvent||window.DeviceMotionEvent);
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
 function motionStatus(message){$('motionStatus').textContent=message}
+function motionCss(x=0,y=0,rx=0,ry=0){
+  setVar('--motion-x',x.toFixed(2)+'px');setVar('--motion-y',y.toFixed(2)+'px');
+  setVar('--motion-rx',rx.toFixed(2)+'deg');setVar('--motion-ry',ry.toFixed(2)+'deg');
+}
 function resetMotion(){
   if(motionFrame){cancelAnimationFrame(motionFrame);motionFrame=0}
-  motionSample=null;motionLastFrame=0;
-  for(const [name,val] of [['--motion-x','0px'],['--motion-y','0px'],['--motion-rx','0deg'],['--motion-ry','0deg']])setVar(name,val);
+  motionSample=null;motionZero=null;motionLastFrame=0;motionCss();
 }
-function motionUsable(){return !!state.motion&&motionPermissionGranted&&!motionPreference.matches&&document.visibilityState==='visible'&&!sheetOpen}
+function motionUsable(){
+  return !!state.motion&&motionPermissionGranted&&!motionPreference.matches&&
+    document.visibilityState==='visible'&&!sheetOpen&&!motionDemoActive;
+}
 function motionPaint(timestamp){
   motionFrame=0;
-  if(!motionUsable()||!motionSample){resetMotion();return}
-  // Cap updates at 20 fps; compositor/CSS smoothly interpolates between samples.
-  if(timestamp-motionLastFrame<50)return;
+  if(!motionUsable()||!motionSample)return;
+  if(timestamp-motionLastFrame<50)return; // at most 20 graphical changes per second
   motionLastFrame=timestamp;
   const {beta,gamma}=motionSample,strength=clamp(Number(state.motionIntensity)||3,1,10)/10;
-  const x=clamp(gamma,-30,30)/30,y=clamp(beta-45,-35,35)/35;
-  setVar('--motion-x',(x*strength*9).toFixed(2)+'px');
-  setVar('--motion-y',(y*strength*6).toFixed(2)+'px');
-  setVar('--motion-rx',(-y*strength*5).toFixed(2)+'deg');
-  setVar('--motion-ry',(x*strength*7).toFixed(2)+'deg');
+  if(!motionZero)motionZero={beta,gamma};
+  const x=clamp(gamma-motionZero.gamma,-26,26)/26;
+  const y=clamp(beta-motionZero.beta,-26,26)/26;
+  // More perceptible than v19 at default strength, still limited to tiny tilts.
+  motionCss(x*strength*16,y*strength*12,-y*strength*9,x*strength*11);
 }
-function onDeviceOrientation(event){
-  if(!motionUsable()||!Number.isFinite(event.beta)||!Number.isFinite(event.gamma))return;
-  motionSample={beta:event.beta,gamma:event.gamma};
+function pushMotion(beta,gamma){
+  if(!motionUsable()||!Number.isFinite(beta)||!Number.isFinite(gamma))return;
+  motionSensorCount++;
+  motionSample={beta,gamma};
+  if(motionSensorCount===1){
+    motionStatus('Capteur détecté · Incline le téléphone après avoir fermé les réglages.');
+    clearTimeout(motionWatchdog);
+  }
   if(!motionFrame)motionFrame=requestAnimationFrame(motionPaint);
+}
+function onDeviceOrientation(event){pushMotion(event.beta,event.gamma)}
+function onDeviceMotion(event){
+  // Gravity-based tilt fallback for iOS variants that do not emit deviceorientation.
+  const g=event.accelerationIncludingGravity;
+  if(!g||!Number.isFinite(g.x)||!Number.isFinite(g.y)||!Number.isFinite(g.z))return;
+  const beta=Math.atan2(g.y,Math.hypot(g.x,g.z))*180/Math.PI;
+  const gamma=Math.atan2(g.x,Math.hypot(g.y,g.z))*180/Math.PI;
+  pushMotion(beta,gamma);
+}
+function detachMotion(){
+  if(motionListening){
+    window.removeEventListener('deviceorientation',onDeviceOrientation);
+    window.removeEventListener('devicemotion',onDeviceMotion);
+    motionListening=false;
+  }
+  clearTimeout(motionWatchdog);motionWatchdog=null;
 }
 function syncMotion(){
   const active=motionUsable()&&motionSupported;
-  if(active&&!motionListening){window.addEventListener('deviceorientation',onDeviceOrientation,{passive:true});motionListening=true}
-  else if(!active&&motionListening){window.removeEventListener('deviceorientation',onDeviceOrientation);motionListening=false}
-  if(!active)resetMotion();
+  if(active&&!motionListening){
+    motionSensorCount=0;motionZero=null;
+    window.addEventListener('deviceorientation',onDeviceOrientation,{passive:true});
+    window.addEventListener('devicemotion',onDeviceMotion,{passive:true});
+    motionListening=true;
+    motionWatchdog=setTimeout(()=>{
+      if(motionListening&&motionSensorCount===0)motionStatus('Aucune donnée du capteur. Réessaie dans Safari et autorise les mouvements.');
+    },3500);
+  }else if(!active&&motionListening){detachMotion()}
+  if(!active&&!motionDemoActive)resetMotion();
   if(!state.motion)motionStatus('Désactivé · Aucun capteur utilisé.');
-  else if(motionPreference.matches)motionStatus('Pause : Réduire les animations est activé sur cet appareil.');
-  else if(!motionSupported)motionStatus('Capteur de mouvement indisponible.');
-  else if(!motionPermissionGranted)motionStatus('Autorisation de mouvement nécessaire.');
-  else if(document.visibilityState!=='visible'||sheetOpen)motionStatus('En pause · Reprend à la fermeture des réglages.');
-  else motionStatus('Actif · Incline légèrement l’iPhone.');
+  else if(motionPreference.matches)motionStatus('En pause : Réduire les animations est activé.');
+  else if(!motionSupported)motionStatus('Aucun capteur compatible détecté.');
+  else if(!motionPermissionGranted)motionStatus('Autorisation nécessaire : touche Autoriser les mouvements.');
+  else if(document.visibilityState!=='visible'||sheetOpen)motionStatus('Autorisé · Ferme ce panneau, puis incline le téléphone.');
+  else if(motionSensorCount>0)motionStatus('Capteur détecté · Incline légèrement le téléphone.');
+  else motionStatus('En attente de données du capteur…');
 }
 async function requestMotionAccess(){
   if(!state.motion||!motionSupported||motionPreference.matches){syncMotion();return}
   try{
-    const orientation=window.DeviceOrientationEvent;
-    if(typeof orientation.requestPermission==='function'){
-      // Directly invoked from click/change before the first await (iOS requirement).
-      const permission=await orientation.requestPermission();
-      if(permission!=='granted'){motionPermissionGranted=false;motionStatus('Autorisation refusée. Vérifie les réglages Safari.');return}
+    const O=window.DeviceOrientationEvent, M=window.DeviceMotionEvent;
+    // Both permission promises are created synchronously in this click event.
+    const prompts=[];
+    if(O&&typeof O.requestPermission==='function')prompts.push(O.requestPermission());
+    if(M&&typeof M.requestPermission==='function')prompts.push(M.requestPermission());
+    const decisions=await Promise.all(prompts);
+    if(decisions.some(x=>x!=='granted')){
+      motionPermissionGranted=false;motionStatus('Autorisation refusée. Réessaie depuis Safari.');return
     }
-    motionPermissionGranted=true;syncMotion();
-  }catch{motionPermissionGranted=false;motionStatus('Autorisation impossible. Réessaie dans Safari.')}
+    motionPermissionGranted=true;
+    syncMotion();
+    motionStatus('Autorisation accordée · Ferme les réglages et incline l’iPhone.');
+  }catch(error){
+    motionPermissionGranted=false;
+    motionStatus('Autorisation impossible. Ouvre NightDial dans Safari pour réessayer.');
+  }
+}
+function stopMotionDemo(){
+  motionDemoTimers.forEach(clearTimeout);motionDemoTimers=[];motionDemoActive=false;
+  resetMotion();syncMotion();
+}
+function demoMotion(){
+  if(motionPreference.matches){motionStatus('Démonstration désactivée : Réduire les animations est actif.');return}
+  if(document.visibilityState!=='visible')return;
+  stopMotionDemo();motionDemoActive=true;detachMotion();resetMotion();
+  setSheet(false);
+  toast('Démonstration 3D · Regarde le cadran');
+  const sequence=[[0,0,0,0],[6,-5,3,-4],[-6,4,-3,4],[4,3,-2,-3],[0,0,0,0]];
+  sequence.forEach(([x,y,rx,ry],i)=>{
+    motionDemoTimers.push(setTimeout(()=>motionCss(x,y,rx,ry),i*650));
+  });
+  motionDemoTimers.push(setTimeout(stopMotionDemo,sequence.length*650+350));
 }
 $('motionPermission').addEventListener('click',requestMotionAccess);
-if(typeof motionPreference.addEventListener==='function')motionPreference.addEventListener('change',syncMotion);
-else if(typeof motionPreference.addListener==='function')motionPreference.addListener(syncMotion);
-document.addEventListener('visibilitychange',syncMotion);
+$('motionDemo').addEventListener('click',demoMotion);
+if(typeof motionPreference.addEventListener==='function')motionPreference.addEventListener('change',()=>{stopMotionDemo();syncMotion()});
+else if(typeof motionPreference.addListener==='function')motionPreference.addListener(()=>{stopMotionDemo();syncMotion()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'&&motionDemoActive)stopMotionDemo();syncMotion()});
 
 // User gesture controls: pointer events prevent synthetic touch-click conflicts.
 let sheetOpen=false,gesture=null,lastTap=0,tapTimer;
