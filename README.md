@@ -2,6 +2,25 @@
 
 Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript sans compte Apple Developer.
 
+## v27 — Chevet ambre et routine du soir
+
+- Le cadran numérique **Chevet ambre** s’affiche par défaut lors d’une nouvelle installation. Le cadran **Gare de nuit** conserve ses volets mécaniques. Les préférences d’affichage déjà enregistrées sont reprises.
+- **Lancer la routine** applique le cadran du profil, atténue l’affichage et démarre l’ambiance pendant 30 minutes par défaut. Le cadran affiche le temps restant. La routine garde le lever de soleil visuel à l’heure affichée tant que NightDial reste ouvert. Elle prend fin dix minutes après le réveil visuel ou via **Terminer la routine**.
+- Dans **Réglages → Nuit → Routine du soir**, personnalise **Semaine** et **Week-end**. Le profil suit la date du réveil à venir : vendredi soir prépare le samedi et dimanche soir prépare le lundi. Le réveil sonore de l’onglet **Réveil** garde sa propre heure.
+- **Pluie douce** et **Bruit brun** sont inclus et disponibles hors ligne après installation du cache. **Dérive thêta** est mise en cache après une première lecture en ligne. Le fondu des 20 dernières secondes dépend du contrôle du volume par le navigateur. Safari peut ignorer ce réglage sur iPhone.
+- Après fermeture ou rechargement, relance la routine pour démarrer une nouvelle session. Pour les réveils importants, utilise l’app Horloge d’iOS. Le réveil progressif de NightDial dépend du maintien de l’écran et de l’exécution de la PWA au premier plan.
+
+## v26 — Theta Sleep intégré et réveil au premier plan
+
+- Dans **Réglages → Nuit → Theta Sleep**, activez le mode nuit, puis cochez **Musique thêta**. La piste originale **Dérive thêta 428 Hz** est incluse dans NightDial et démarre sur cette action. Choisissez 15, 30 ou 60 minutes. Un changement de durée reste calculé depuis le début de la lecture. Le volume peut être ajusté sans relancer la piste. Sur iPhone, utilisez les boutons physiques si le réglage dans NightDial est sans effet.
+- La lecture s’arrête à la fin de la minuterie, à la sortie du mode nuit ou au déclenchement du réveil. Au premier lancement de la piste avec une connexion, NightDial tente de la mettre en cache. Attendez le message **Piste disponible hors ligne** avant de couper la connexion. Safari peut effacer le cache ou interrompre la lecture en arrière-plan.
+- Dans **Réglages → Réveil**, choisissez une des trois sonneries et touchez **Écouter et préparer la sonnerie**. Laissez NightDial visible et l’écran éveillé. Le retour au premier plan dans les deux minutes qui suivent l’heure prévue peut déclencher un réveil manqué. NightDial indique si le navigateur refuse la lecture. Utilisez l’application Horloge d’iOS pour les réveils importants.
+- Le Service Worker utilise le cache `nightdial-premium-v26`. Les préférences sous `nightdial-v1` sont conservées. La v26 ne modifie pas le fichier local éventuellement importé dans la v25.
+
+**Droits audio.** [Dérive thêta 428 Hz](derive-theta-428hz.mp3) est une création originale du propriétaire de NightDial, publiée avec son autorisation. Tous droits réservés sur le morceau. La licence Apache 2.0 du code ne s’applique pas à ce fichier audio.
+
+**Validation sur appareil.** Vérifier le réveil programmé sans interaction à l’heure prévue, le report, la lecture de Theta Sleep et la reprise hors ligne après mise à jour. Faire ces essais dans Safari et depuis l’écran d’accueil, puis consigner le modèle et la version d’iOS.
+
 ## Fonctions
 - Modes analogique XXL et numérique XXL, portrait et paysage
 - Date française, météo locale via Open-Meteo (autorisation de localisation)
@@ -87,7 +106,7 @@ La lecture tente de continuer pendant que l'écran NightDial reste ouvert, mais 
 **Aucune efficacité clinique sur l'endormissement n'est garantie** : les preuves concernant les battements binauraux et le sommeil sont limitées. Gardez un volume bas, arrêtez si l'écoute est inconfortable, et privilégiez un casque confortable plutôt que de dormir avec un équipement qui gêne.
 
 
-## v25 — Musique thêta Pixabay (import local)
+## Historique v25 — Musique thêta Pixabay (import local)
 
 Le synthétiseur binaural de v24 est remplacé par le morceau **« Thetha Waves 428 Hz » de Michael-X_Studio**, durée 9 min 30, disponible sur Pixabay : https://pixabay.com/music/meditationspiritual-thetha-waves-428-hz-285027/.
 
