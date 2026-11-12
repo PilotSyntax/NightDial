@@ -127,6 +127,12 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
       <div class="field"><span>Rouge profond<small>Confort visuel dans l'obscurité</small></span><input aria-label="Rouge profond" id="deepRed" type="checkbox"></div>
       <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
       <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
+       <p class="section-title">Theta Sleep · ambiance sonore</p>
+       <div class="field"><span>Ondes thêta binaurales<small>Optionnelle, au casque stéréo et à faible volume · fonctionne seulement en mode nuit</small></span><input id="thetaSound" type="checkbox" aria-label="Activer les battements binauraux thêta"></div>
+       <div class="field"><span>Fréquence de battement</span><select id="thetaBeat" aria-label="Fréquence des ondes thêta"><option value="4">4 Hz · profond</option><option value="6">6 Hz · doux</option><option value="8">8 Hz · léger</option></select></div>
+       <div class="field"><span>Volume doux</span><input id="thetaVolume" aria-label="Volume des ondes thêta" type="range" min="5" max="35" step="5" value="15"></div>
+       <div class="field"><span>Arrêt automatique</span><select id="thetaDuration" aria-label="Durée de l’ambiance thêta"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
+       <p id="thetaStatus" class="status" role="status" aria-live="polite">Désactivé. L'effet binaural nécessite un casque stéréo ; les bénéfices sur le sommeil ne sont pas établis. iOS peut suspendre le son en arrière-plan.</p>
        <p class="section-title">Smart Bedside · profils automatiques</p>
        <div class="field"><span>Profil de chevet<small>Suit les heures Début et Fin ci-dessus. Le style de jour est conservé.</small></span><input type="checkbox" id="bedsideAuto" aria-label="Activer le profil de chevet automatique"></div>
        <div class="field"><span>Cadran de nuit</span><select id="bedsideMode" aria-label="Cadran de nuit"><option value="analog">Analogique</option><option value="numeric">Numérique</option><option value="flip">Flip gare</option></select></div>
@@ -184,9 +190,9 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,alarmMelody:'zen',snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25};
+const defaults={mode:'analog',color:'red',bright:55,dim:40,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,alarmMelody:'zen',snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25,thetaSound:false,thetaBeat:6,thetaVolume:15,thetaDuration:30};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
-const state={...defaults,...saved};
+const state={...defaults,...saved};state.thetaSound=false; // Session-only: never claim audio is playing after reload.
 // Migration: palette names used in older versions are still recognized.
 const accent=()=>palettes[state.color]||(/#[0-9a-f]{6}$/i.test(state.color||'')?state.color:palettes.red);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
@@ -199,7 +205,7 @@ function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state)
 let toastTimer,hudTimer;
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3000)}
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
-function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','alarmMelody','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
+function syncControls(){for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','alarmMelody','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor','thetaBeat','thetaVolume','thetaDuration'])$(id).value=state[id];for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];$('customColor').value=accent();document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(state.mode===b.dataset.mode)))}
 /* v20: countdown to the next local alarm, DST-aware via Date.setHours/setDate.
    The display is updated only when its text changes, not every animation frame. */
 function remainingToWake(now=new Date(),wake=state.wakeTime,snooze=0){
@@ -265,7 +271,7 @@ $('previewBedside').addEventListener('click',()=>{
   setTimeout(()=>{bedsidePreviewUntil=0;render()},8100);
 });
 
-function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');applyBedsideAppearance();$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();updateMorningBrief();persist();syncClockLoop()}
+function render(){syncMotion();const alarmVisible=Boolean(state.soundAlarm);$('alarmIndicator').hidden=!alarmVisible;$('alarmIndicatorTime').textContent=state.wakeTime||'07:00';$('alarmIndicator').setAttribute('aria-label',alarmVisible?'Alarme sonore activée à '+(state.wakeTime||'07:00'):'Alarme désactivée');applyBedsideAppearance();$('handSecond').style.display=state.seconds?'':'none';$('weatherLine').hidden=!state.showWeather||!weatherInfo;document.body.classList.toggle('ambient',!!state.ambient);$('moonWidget').hidden=!state.moon;syncControls();updateCountdown();updateAdaptive();updateMorningBrief();syncTheta();persist();syncClockLoop()}
 // Analog Swiss-station dial; all marks and numerals are generated once.
 const NS='http://www.w3.org/2000/svg';function svg(tag,attrs){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs||{}))e.setAttribute(k,v);return e}
 for(let i=0;i<60;i++){const a=i*Math.PI/30-Math.PI/2,major=i%5===0;const t=svg('line',{x1:200+(major?172:184)*Math.cos(a),y1:200+(major?172:184)*Math.sin(a),x2:200+190*Math.cos(a),y2:200+190*Math.sin(a),class:'clock-tick','stroke-width':major?3:1.25});$('ticks').append(t)}
@@ -299,7 +305,7 @@ function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),min
  pointHand('handHour',hr*30,13,87);pointHand('handMinute',mn*6,18,134);pointHand('handSecond',paused*6,36,145);
  const h=String(hours).padStart(2,'0'),m=String(mins).padStart(2,'0');const value=h+m;
  setNumeric(value);if(!demoInProgress)setFlaps(value);$('numeric').setAttribute('aria-label',h+' heures '+m);$('flip').setAttribute('aria-label',h+' heures '+m);
- const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});const oldMode=document.body.dataset.mode;updateAdaptive(now);if(oldMode!==document.body.dataset.mode&&state.seconds)setTimeout(syncClockLoop,0);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
+ const key=hours*60+mins;if(key!==lastClockMinute){lastClockMinute=key;$('date').textContent=now.toLocaleDateString('fr-CA',{weekday:'long',day:'numeric',month:'long'});const oldMode=document.body.dataset.mode;updateAdaptive(now);syncTheta(now);if(oldMode!==document.body.dataset.mode&&state.seconds)setTimeout(syncClockLoop,0);checkAlarm(now);updateCountdown(now);updateMorningBrief(now)}
 }
 function stopLoop(){clearTimeout(clockTimeout);cancelAnimationFrame(frameId);frameId=0}
 function analogFrame(){if(document.visibilityState!=='visible'||!state.seconds||bedsideModeAt()!=='analog')return;updateClock(new Date(),true);frameId=requestAnimationFrame(analogFrame)}
@@ -450,9 +456,9 @@ tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.ad
 for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
-for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}});
+for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaBeat','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}if(id==='thetaSound'){if(state.thetaSound)startTheta();else stopTheta('Arrêté manuellement.')}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
 // Astronomical approximation for a subtle moon phase shape; not intended for navigation.
@@ -519,6 +525,83 @@ function drawWeather(){if(!weatherInfo){$('weatherLine').hidden=true;return}$('w
 async function updateWeather(force=false){if(weatherBusy||(!state.showWeather&&!state.morningBriefing)||(!force&&Date.now()-weatherAt<15*60000))return;if(!navigator.onLine){$('weatherStatus').textContent='Météo hors ligne : dernière donnée conservée.';return}weatherBusy=true;$('weatherStatus').textContent='Localisation et météo en cours…';try{const pos=await getPosition(),lat=pos.coords.latitude,lon=pos.coords.longitude;const u='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&daily=sunrise&forecast_days=3&temperature_unit=celsius&timezone=auto';const result=await fetch(u,{cache:'no-store'});if(!result.ok)throw Error('Service météo indisponible');const data=await result.json();if(typeof data.current?.temperature_2m!=='number')throw Error('Température indisponible');weatherInfo={temp:data.current.temperature_2m,code:data.current.weather_code,day:data.current.is_day===1,city:''};weatherAt=Date.now();morningForecast={hourly:data.hourly,daily:data.daily};drawWeather();updateMorningBrief();const city=await lookupCity(lat,lon);weatherInfo.city=city;drawWeather();$('weatherStatus').textContent='Météo actualisée'+(city?' · '+city:'')}catch(err){$('weatherStatus').textContent='Météo indisponible : vérifie la localisation et la connexion.';if(force)toast('Impossible d’actualiser la météo.');updateMorningBrief()}finally{weatherBusy=false}}
 $('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
 // Web Audio: sound is created by oscillators, gated behind a user gesture.
+
+/* v24 Theta Sleep: user-started binaural stereo audio (not 4 Hz sound).
+   Fixed low-amplitude PCM in separate L/R channels: 220 Hz and 220 + beat Hz.
+   Loop phase aligns at 8 seconds; session ends on night exit, timer or alarm.
+   iOS background playback / locked screen is NOT guaranteed. */
+let thetaAudio=null,thetaUrl=null,thetaEndAt=0,thetaTimer=null,thetaToken=0;
+function thetaNight(now=new Date()){
+ const m=now.getHours()*60+now.getMinutes();
+ return !!state.manualNight||!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd));
+}
+function makeThetaWav(beat=6,volume=15,duration=8){
+ const b=[4,6,8].includes(Number(beat))?Number(beat):6;
+ const rate=16000,frames=rate*duration,buffer=new ArrayBuffer(44+frames*4),view=new DataView(buffer);
+ const write=(p,v)=>{for(let k=0;k<v.length;k++)view.setUint8(p+k,v.charCodeAt(k))};
+ write(0,'RIFF');view.setUint32(4,36+frames*4,true);write(8,'WAVE');write(12,'fmt ');
+ view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,2,true);
+ view.setUint32(24,rate,true);view.setUint32(28,rate*4,true);
+ view.setUint16(32,4,true);view.setUint16(34,16,true);
+ write(36,'data');view.setUint32(40,frames*4,true);
+ const amplitude=Math.min(.16,Math.max(.02,Number(volume)||15)/100*.32);
+ for(let i=0;i<frames;i++){
+   const t=i/rate,edge=Math.min(1,t/.07,(duration-t)/.07);
+   const envelope=Math.max(0,edge);
+   const left=Math.sin(2*Math.PI*220*t)*amplitude*envelope;
+   const right=Math.sin(2*Math.PI*(220+b)*t)*amplitude*envelope;
+   view.setInt16(44+i*4,Math.round(left*32767),true);
+   view.setInt16(46+i*4,Math.round(right*32767),true);
+ }
+ return new Blob([buffer],{type:'audio/wav'});
+}
+function thetaStatus(message){$('thetaStatus').textContent=message}
+function stopTheta(message='Ambiance thêta arrêtée.'){
+ ++thetaToken;clearInterval(thetaTimer);thetaTimer=null;
+ if(thetaAudio){thetaAudio.pause();thetaAudio.removeAttribute('src');thetaAudio.load();thetaAudio=null}
+ if(thetaUrl){URL.revokeObjectURL(thetaUrl);thetaUrl=null}
+ thetaEndAt=0;state.thetaSound=false;
+ $('thetaSound').checked=false;
+ thetaStatus(message);persist();
+}
+function syncTheta(now=new Date()){
+ if(!state.thetaSound)return;
+ if(!thetaNight(now)){stopTheta('Arrêt automatique : mode nuit terminé.');return}
+ if(Date.now()>=thetaEndAt&&thetaEndAt){stopTheta('Minuterie thêta terminée.');return}
+ if(thetaAudio){
+   const min=Math.max(1,Math.ceil((thetaEndAt-Date.now())/60000));
+   thetaStatus('Ambiance thêta '+state.thetaBeat+' Hz · '+min+' min restantes. Casque stéréo recommandé.');
+ }
+}
+function startTheta(){
+ if(!state.thetaSound)return;
+ if(!thetaNight()){
+   stopTheta('Active le mode nuit ou attends la plage nocturne pour écouter les ondes thêta.');
+   return;
+ }
+ if(typeof Audio==='undefined'){
+   stopTheta('Lecteur audio indisponible.');
+   return;
+ }
+ // This function must run directly inside the checkbox change gesture on iOS.
+ const token=++thetaToken;
+ try{
+  if(typeof setPlaybackAudioSession==='function')setPlaybackAudioSession();
+  const volume=Number(state.thetaVolume)||15,beat=Number(state.thetaBeat)||6;
+  thetaUrl=URL.createObjectURL(makeThetaWav(beat,volume));
+  thetaAudio=new Audio(thetaUrl);
+  thetaAudio.loop=true;thetaAudio.preload='auto';
+  thetaEndAt=Date.now()+clamp(state.thetaDuration,15,60)*60000;
+  const audio=thetaAudio;
+  audio.onplaying=()=>{if(token===thetaToken)syncTheta()};
+  audio.onerror=()=>{if(token===thetaToken)stopTheta('Lecture impossible sur cet iPhone. Réessaie dans Safari.')};
+  const result=audio.play();
+  if(result?.catch)result.catch(e=>{if(token===thetaToken)stopTheta('Lecture bloquée par iOS : '+(e?.name||'accès audio refusé'))});
+  thetaTimer=setInterval(()=>syncTheta(),10000);
+  thetaStatus('Démarrage de l’ambiance stéréo…');
+ }catch(error){if(token===thetaToken)stopTheta('Erreur audio : '+(error?.message||'lecture impossible'))}
+}
+
 let audioCtx=null,alarmTimer=null,alarmGain=null,alarmStarted=0,alarmActive=false,snoozeUntil=0,lastAlarmDay='',previewAudioTimer=null;
 // iOS 26+ can render Web Audio with state='running' but no audible output.
 // The user-initiated HTMLMediaElement test is an independent output path.
@@ -719,7 +802,7 @@ function playClick(){if(!state.flipSound||!audioCtx)return;playTone(390,.055,.01
 function alarmPulse(){if(!alarmActive)return;const growth=Math.min(1,(Date.now()-alarmStarted)/120000),level=(.018+.12*growth)*clamp(state.alarmVolume,5,80)/80;playTone(490+growth*130,.5,level)}
 function startAlarm(){
   if(alarmActive||!state.soundAlarm||document.visibilityState!=='visible')return;
-  alarmActive=true;alarmStarted=Date.now();alarmAttempt++;
+  stopTheta('Arrêté pour laisser place au réveil.');alarmActive=true;alarmStarted=Date.now();alarmAttempt++;
   document.body.classList.add('alarming');updateCountdown();
   toast('Réveil NightDial · '+melodyNames[normalizeMelody(state.alarmMelody)]);
   beginAlarmAudio(alarmAttempt);
