@@ -251,7 +251,7 @@ function applyBedsideAppearance(now=new Date()){
   const previous=document.body.dataset.mode;
   document.body.dataset.mode=bedsideModes.includes(mode)?mode:'analog';
   setVar('--accent',color);
-  setVar('--rgb',color.match(/[a-f\\d]{2}/gi).map(v=>parseInt(v,16)).join(','));
+  setVar('--rgb',color.match(/[0-9a-f]{2}/gi).map(v=>parseInt(v,16)).join(','));
   const status=$('bedsideStatus');
   if(!state.bedsideAuto&&Date.now()>=bedsidePreviewUntil)status.textContent='Désactivé · Le style de jour reste inchangé.';
   else if(bedsideShowing(now))status.textContent='Profil nuit actif · Le profil jour revient automatiquement.';
@@ -289,7 +289,7 @@ function updateAdaptive(now=new Date()){
  if(sunlight)dim=dim*(1-sunlight)+Math.min(baseline,.10)*sunlight;
  setVar('--bright',(clamp(bedsideShowing(now)?state.bedsideBright:state.bright,5,100)/100).toFixed(3));setVar('--dim',clamp(dim,0,.95).toFixed(3));setVar('--sunrise',(sunlight*.88).toFixed(3));setVar('--sunrise-daylight',Math.pow(sunlight,3).toFixed(3));
  document.body.classList.toggle('minimal',((!!state.nightMinimal&&nightActive)||state.theme==='minimal')&&!sunlight&&!sheetOpen);
- if(state.deepRed){const color=nightActive?'#aa1d20':accent();if(root.style.getPropertyValue('--accent')!==color){setVar('--accent',color);setVar('--rgb',color.match(/[a-f\d]{2}/gi).map(x=>parseInt(x,16)).join(','))}}
+ if(state.deepRed&&!bedsideShowing(now)){const color=nightActive?'#aa1d20':accent();if(root.style.getPropertyValue('--accent')!==color){setVar('--accent',color);setVar('--rgb',color.match(/[a-f\d]{2}/gi).map(x=>parseInt(x,16)).join(','))}}
  const step=state.oledShift&&document.visibilityState==='visible'?Math.floor(now.getTime()/120000):-1;if(step!==lastOledStep){lastOledStep=step;const positions=[[0,0],[2,-2],[-1,2],[-2,-1],[1,1]];const [x,y]=step<0?[0,0]:positions[step%positions.length];setVar('--shift-x',x+'px');setVar('--shift-y',y+'px')}
 }
 function updateClock(now=new Date(),smooth=false){const hours=now.getHours(),mins=now.getMinutes(),secs=now.getSeconds()+now.getMilliseconds()/1000;const hr=hours%12+mins/60+secs/3600,mn=mins+secs/60;const paused=secs<.42?0:(secs-.42)*60/59.58;
