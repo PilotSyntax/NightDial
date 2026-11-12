@@ -75,6 +75,13 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
 #alarmIndicator[hidden]{display:none!important}
 #alarmIndicator svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}
 @media(orientation:landscape){#alarmIndicator{top:calc(12px + env(safe-area-inset-top));right:calc(15px + env(safe-area-inset-right))}}
+
+/* v19.2 diagnostics: unmistakable sensor-free 3D demonstration. */
+#clockVisual.motion-demo{animation:nightdialMotionProof 5.8s ease-in-out both!important;transform-origin:center center;will-change:transform}
+@keyframes nightdialMotionProof{0%,100%{transform:translate(0,0) perspective(680px) rotateX(0) rotateY(0) scale(1)}18%{transform:translate(18px,-11px) perspective(680px) rotateX(10deg) rotateY(-15deg) scale(.94)}42%{transform:translate(-18px,12px) perspective(680px) rotateX(-11deg) rotateY(15deg) scale(.94)}66%{transform:translate(15px,8px) perspective(680px) rotateX(8deg) rotateY(-11deg) scale(.94)}85%{transform:translate(-8px,-6px) perspective(680px) rotateX(-5deg) rotateY(8deg) scale(.98)}}
+#motionProof{position:fixed;z-index:25;top:calc(60px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);white-space:nowrap;background:#141418;border:1px solid var(--accent);color:var(--accent);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:600;letter-spacing:.025em;box-shadow:0 0 22px rgba(var(--rgb),.2);pointer-events:none}
+#motionProof[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){#clockVisual.motion-demo{animation:none!important}}
 </style>
 </head>
 <body data-mode="analog">
@@ -93,6 +100,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
     </div>
     <div id="context" aria-label="Date et météo"><span id="date"></span><span id="weatherLine" hidden><span id="weatherIcon"></span><span id="temperature"></span><span id="city"></span></span></div>
   </main>
+  <div id="motionProof" role="status" aria-live="polite" hidden>TEST 3D · NightDial v19.2</div>
   <div id="intensityHud" role="status" aria-live="polite">☀ <span id="intensityLabel">60 %</span></div>
   <div id="scrim" aria-hidden="true"></div>
   <section id="sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true" inert>
@@ -131,6 +139,7 @@ html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystem
        <div class="field"><span>Intensité 3D<small>Faible amplitude, consommation limitée</small></span><input aria-label="Intensité de la parallaxe 3D" id="motionIntensity" type="range" min="1" max="10" step="1" value="3"></div>
        <div class="actions"><button type="button" id="motionPermission" class="action-secondary">Autoriser les mouvements</button><button type="button" id="motionDemo" class="action-secondary">Tester la 3D</button></div>
        <p id="motionStatus" class="status" role="status" aria-live="polite">Désactivé · Aucun capteur utilisé.</p>
+       <p class="status">Version Motion : <strong>v19.2</strong>. « Tester la 3D » fonctionne sans capteur ni permission. Si l’horloge ne bouge pas, recharge NightDial dans Safari.</p>
       <div class="field"><span>Trotteuse fluide<small>Animation réduite si désactivée</small></span><input aria-label="Trotteuse fluide" id="seconds" type="checkbox"></div>
       <div class="field"><span>Animation des volets</span><input aria-label="Animation des volets" id="flipPro" type="checkbox"></div>
       <div class="field"><span>Clic mécanique<small>Audio après interaction</small></span><input aria-label="Clic mécanique" id="flipSound" type="checkbox"></div>
@@ -314,20 +323,26 @@ async function requestMotionAccess(){
   }
 }
 function stopMotionDemo(){
-  motionDemoTimers.forEach(clearTimeout);motionDemoTimers=[];motionDemoActive=false;
+  motionDemoTimers.forEach(clearTimeout);motionDemoTimers=[];
+  motionDemoActive=false;
+  $('clockVisual').classList.remove('motion-demo');
+  $('motionProof').hidden=true;
   resetMotion();syncMotion();
 }
 function demoMotion(){
-  if(motionPreference.matches){motionStatus('Démonstration désactivée : Réduire les animations est actif.');return}
+  if(motionPreference.matches){
+    motionStatus('Démo bloquée par Réduire les animations dans les réglages iOS.');
+    return;
+  }
   if(document.visibilityState!=='visible')return;
-  stopMotionDemo();motionDemoActive=true;detachMotion();resetMotion();
+  stopMotionDemo();
+  motionDemoActive=true;detachMotion();resetMotion();
   setSheet(false);
-  toast('Démonstration 3D · Regarde le cadran');
-  const sequence=[[0,0,0,0],[6,-5,3,-4],[-6,4,-3,4],[4,3,-2,-3],[0,0,0,0]];
-  sequence.forEach(([x,y,rx,ry],i)=>{
-    motionDemoTimers.push(setTimeout(()=>motionCss(x,y,rx,ry),i*650));
-  });
-  motionDemoTimers.push(setTimeout(stopMotionDemo,sequence.length*650+350));
+  $('motionProof').hidden=false;
+  $('clockVisual').classList.remove('motion-demo');
+  void $('clockVisual').offsetWidth; // Restart native CSS animation in Safari.
+  $('clockVisual').classList.add('motion-demo');
+  motionDemoTimers.push(setTimeout(stopMotionDemo,5900));
 }
 $('motionPermission').addEventListener('click',requestMotionAccess);
 $('motionDemo').addEventListener('click',demoMotion);
