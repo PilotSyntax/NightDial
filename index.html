@@ -567,6 +567,12 @@ function playNativeTest(){
       button.disabled=false;
     });
     status.textContent='Lecteur iPhone : démarrage du test…';
+    setTimeout(()=>{
+      if(nativeTestAudio===audio&&button.disabled){
+        button.disabled=false;
+        status.textContent='Lecteur iPhone sans réponse après 4 s. Ferme complètement Safari, rouvre le lien, puis réessaie.';
+      }
+    },4000);
     // Do not await anything before audio.play(): WebKit requires a direct gesture.
   }catch(e){status.textContent='Lecteur iPhone indisponible : '+(e?.message||'erreur audio');button.disabled=false}
 }
