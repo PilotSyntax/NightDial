@@ -65,3 +65,14 @@ Dans **Réglages → Nuit → Smart Bedside**, activez le **profil de chevet** p
 Le profil ne modifie **jamais** les réglages de jour sauvegardés (`mode`, `color`, `bright`), et ceux-ci reviennent automatiquement à la fin de la plage, même après un passage à minuit. La fonction est désactivée par défaut et les anciennes préférences restent dans `nightdial-v1`. L'atténuation nocturne, le réveil, NightDial Motion, Sleep Countdown, Morning Briefing et les trois cadrans restent accessibles.
 
 Les bascules ne peuvent se produire que lorsque la PWA est ouverte/visible ou à sa reprise : Safari ne garantit aucune exécution en arrière-plan.
+
+
+## v23 — Réveil mélodique natif iPhone
+
+Dans **Réglages → Réveil**, choisissez la **Sonnerie du réveil** : Zen (cloche douce), Nature (chants d'oiseaux synthétiques) ou Digital (impulsions électroniques). **Écouter la sonnerie** joue un extrait de 5 secondes depuis un lecteur HTML5 natif, déclenché par une interaction directe. **Tester le son (iPhone)** reste disponible comme contrôle indépendant, tout comme **Diagnostic Web Audio**.
+
+À l'heure configurée, si la PWA est **visible et active**, NightDial tente de lancer la sonnerie sélectionnée depuis un fichier WAV généré localement, avec un volume progressif intégré directement aux échantillons audio (montée d'environ 90 secondes, indépendamment du contrôle `HTMLMediaElement.volume`, non fiable sur iPhone). Le son est en boucle jusqu'à **Arrêter** ou **Reporter** ; le snooze existant et le lever de soleil visuel sont conservés.
+
+**Limitation critique iOS** : l'autorisation de lecture lors d'un clic ne garantit **pas** qu'une lecture automatique sera autorisée plus tard. Safari peut bloquer la lecture sans geste récent et suspendre la page si l'écran est verrouillé ou l'application en arrière-plan. NightDial n'est pas un remplacement fiable de l'alarme native iPhone. Utilisez toujours l'application Horloge d'iOS pour les réveils importants.
+
+Aucun fichier de musique ou accès distant n'est nécessaire ; les trois sonneries sont générées par synthèse dans le navigateur et les préférences restent sous `nightdial-v1`.
