@@ -456,8 +456,8 @@ tabs.forEach(t=>{t.addEventListener('click',()=>activateTab(t.dataset.tab));t.ad
 for(const [name,color] of Object.entries(palettes)){const b=document.createElement('button');b.className='chip';b.style.setProperty('--chip',color);b.dataset.color=name;b.title=name;b.setAttribute('aria-label','Couleur '+name);b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{state.color=name;state.theme=null;render()});$('colorSwatches').append(b)}
 $('customColor').addEventListener('input',e=>{state.color=e.target.value;state.theme=null;render()});
 document.querySelectorAll('.theme-btn[data-mode]').forEach(b=>b.addEventListener('click',()=>{state.mode=b.dataset.mode;render()}));document.querySelectorAll('[data-theme]').forEach(b=>b.addEventListener('click',()=>{const t=themes[b.dataset.theme];Object.assign(state,t,{theme:b.dataset.theme});render();toast('Thème '+b.textContent.trim())}));
-for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render()});
-for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaBeat','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render()});
+for(const id of ['bright','dim','nightDim','alarmVolume','motionIntensity','bedsideBright','thetaVolume'])$(id).addEventListener('input',e=>{state[id]=+e.target.value;render();if(id==='thetaVolume'&&state.thetaSound)restartTheta()});
+for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMinutes','bedsideMode','bedsideColor','alarmMelody','thetaBeat','thetaDuration'])$(id).addEventListener('change',e=>{state[id]=['sunriseDuration','snoozeMinutes'].includes(id)?+e.target.value:e.target.value;render();if(['thetaBeat','thetaDuration'].includes(id)&&state.thetaSound)restartTheta()});
 for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','thetaSound','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{state[id]=e.target.checked;render();if(id==='wake')manageWake();if(id==='showWeather'&&state.showWeather)updateWeather(true);if(id==='morningBriefing'&&state.morningBriefing)updateWeather(true);if((id==='soundAlarm'||id==='flipSound')&&state[id])unlockAudio();if(id==='motion'){if(state.motion)requestMotionAccess();else syncMotion()}if(id==='thetaSound'){if(state.thetaSound)startTheta();else stopTheta('Arrêté manuellement.')}});
 // Optional star field: seeded static positions (no high-frequency animation).
 let seed=1729;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}for(let i=0;i<55;i++){const e=document.createElement('span');e.className='star';e.style.left=(random()*100)+'%';e.style.top=(random()*85)+'%';e.style.setProperty('--o',(.14+random()*.39).toFixed(2));$('sky').append(e)}
@@ -573,6 +573,12 @@ function syncTheta(now=new Date()){
    thetaStatus('Ambiance thêta '+state.thetaBeat+' Hz · '+min+' min restantes. Casque stéréo recommandé.');
  }
 }
+function restartTheta(){
+ if(!state.thetaSound)return;
+ stopTheta('Modification du réglage…');
+ state.thetaSound=true;$('thetaSound').checked=true;
+ startTheta();persist();
+}
 function startTheta(){
  if(!state.thetaSound)return;
  if(!thetaNight()){
@@ -594,6 +600,7 @@ function startTheta(){
   thetaEndAt=Date.now()+clamp(state.thetaDuration,15,60)*60000;
   const audio=thetaAudio;
   audio.onplaying=()=>{if(token===thetaToken)syncTheta()};
+  audio.onpause=()=>{if(token===thetaToken&&state.thetaSound)thetaStatus('Lecture interrompue par iOS. Réactive l’option pour reprendre.')};
   audio.onerror=()=>{if(token===thetaToken)stopTheta('Lecture impossible sur cet iPhone. Réessaie dans Safari.')};
   const result=audio.play();
   if(result?.catch)result.catch(e=>{if(token===thetaToken)stopTheta('Lecture bloquée par iOS : '+(e?.name||'accès audio refusé'))});
@@ -830,7 +837,7 @@ $('testWebAudio').addEventListener('click',async()=>{
 $('previewSunrise').addEventListener('click',()=>{temporarySunriseUntil=Date.now()+8000;updateAdaptive();toast('Aperçu du lever de soleil · 8 s');setTimeout(updateAdaptive,8100)});
 // Keep-screen-awake is best effort only on supporting browsers; never promise iOS behavior.
 let wakeLock=null;async function manageWake(){if(wakeLock&&!state.wake){try{await wakeLock.release()}catch{}wakeLock=null}if(!state.wake){$('wakeStatus').textContent='Maintien d’écran désactivé.';return}if(!('wakeLock' in navigator)){$('wakeStatus').textContent='Maintien d’écran non pris en charge sur ce navigateur.';return}if(document.visibilityState!=='visible')return;try{if(!wakeLock||wakeLock.released)wakeLock=await navigator.wakeLock.request('screen');$('wakeStatus').textContent='Maintien d’écran actif (selon iOS).'}catch{$('wakeStatus').textContent='Impossible de maintenir l’écran éveillé (restrictions iOS).'}}
-document.addEventListener('visibilitychange',()=>{syncClockLoop();if(document.visibilityState==='visible'){updateWeather();manageWake()}else stopAlarm()});window.addEventListener('pageshow',()=>{syncClockLoop();manageWake()});document.addEventListener('pointerdown',()=>{if(state.wake&&!wakeLock)manageWake()},{passive:true});
+document.addEventListener('visibilitychange',()=>{syncClockLoop();syncTheta();if(document.visibilityState==='visible'){updateWeather();manageWake()}else stopAlarm()});window.addEventListener('pageshow',()=>{syncClockLoop();manageWake()});document.addEventListener('pointerdown',()=>{if(state.wake&&!wakeLock)manageWake()},{passive:true});
 // Split-flap demonstration changes the next minute, then returns to actual time.
 $('demoFlap').addEventListener('click',()=>{if(reducedMotion()){toast('Désactive Réduire les animations pour voir les volets.');return}state.mode='flip';state.flipPro=true;render();setSheet(false);const t=new Date(Date.now()+61000);const target=timeLabel(t);demoInProgress=true;setFlaps(target,{force:true});setTimeout(()=>{demoInProgress=false;setFlaps(timeLabel(new Date()),{force:true})},1500)});
 // Three onboarding screens, stored separately to preserve v1 settings.
