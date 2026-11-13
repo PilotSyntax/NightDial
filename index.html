@@ -28,6 +28,14 @@
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;width:100%;background:#000;color:var(--fg)}
 html{-webkit-text-size-adjust:100%}body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",sans-serif;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none}button,input,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
 [hidden]{display:none!important}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#shootingSky{position:fixed;inset:0;overflow:hidden;pointer-events:none;display:none}
+body.shooting-stars #shootingSky{display:block}
+#shootingSky i{position:absolute;left:18%;top:12%;width:100px;height:1px;background:linear-gradient(90deg,transparent,#ffffffa0);opacity:0;transform:rotate(32deg);animation:shootingStar 19s linear infinite;animation-play-state:paused}
+body.shooting-stars #shootingSky i{animation-play-state:running}
+#shootingSky i:nth-child(2){left:52%;top:8%;animation-delay:6s;animation-duration:23s}
+#shootingSky i:nth-child(3){left:5%;top:32%;animation-delay:13s;animation-duration:29s}
+@keyframes shootingStar{0%{opacity:0;transform:translate(0,0) rotate(32deg)}1%{opacity:.55}6%{opacity:0;transform:translate(230px,145px) rotate(32deg)}100%{opacity:0;transform:translate(230px,145px) rotate(32deg)}}
+@media(prefers-reduced-motion:reduce){body.shooting-stars #shootingSky{display:none}}
 #sky{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity 450ms;background:#000;overflow:hidden}body.ambient #sky{opacity:1}.star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:var(--o,.4);box-shadow:0 0 5px #fff7;transform:translateZ(0)}
 #sunriseLayer{position:fixed;inset:0;pointer-events:none;opacity:var(--sunrise);background:linear-gradient(to top,rgba(255,171,82,.68),rgba(221,82,70,.24) 35%,rgba(71,42,98,.1) 70%,transparent);transition:opacity 35s linear;will-change:opacity}
 #sunriseLayer::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(255,234,191,.75),rgba(255,203,143,.21) 54%,rgba(255,226,194,.05));opacity:var(--sunrise-daylight,0);transition:opacity 35s linear}
@@ -277,7 +285,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 <body data-mode="numeric">
   <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ndMark" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14.2" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".5"/><path d="M16 4.4v2.4M27.6 16h-2.4M16 27.6v-2.4M4.4 16h2.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".8"/><path fill="currentColor" d="M21.8 18.6A7 7 0 0 1 13.4 10.2a7 7 0 1 0 8.4 8.4Z"/></symbol></svg>
   <div id="splash" aria-hidden="true"><div class="splash-lockup"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><span>NIGHTDIAL</span></div></div>
-  <div id="sky" aria-hidden="true"></div><div id="sunriseLayer" aria-hidden="true"></div>
+  <div id="sky" aria-hidden="true"></div><div id="shootingSky" aria-hidden="true"><i></i><i></i><i></i></div><div id="sunriseLayer" aria-hidden="true"></div>
   <div id="moonWidget" aria-hidden="true"><svg viewBox="0 0 40 40"><defs><mask id="moonMask"><rect width="40" height="40" fill="black"/><circle cx="20" cy="20" r="14" fill="white"/><ellipse id="moonShade" cx="18" cy="20" rx="14" ry="14" fill="black"/></mask></defs><circle cx="20" cy="20" r="14" fill="currentColor" mask="url(#moonMask)"/></svg></div>
   <main id="clockStage" tabindex="0" role="application" aria-label="NightDial. Balayer horizontalement pour changer l'horloge, verticalement pour ajuster la luminosité. Double toucher pour le mode nuit. Toucher pour ouvrir les réglages.">
     <div id="alarmIndicator" role="status" aria-label="Alarme activée" hidden>
@@ -320,6 +328,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="field"><span>Masquer date et météo</span><input aria-label="Masquer date et météo" id="nightMinimal" type="checkbox"></div>
       <div class="field"><span>Rouge profond<small>Confort visuel dans l'obscurité</small></span><input aria-label="Rouge profond" id="deepRed" type="checkbox"></div>
       <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
+      <div class="field"><span>Étoiles filantes<small>Animation discrète pendant le mode nuit et la routine.</small></span><input aria-label="Étoiles filantes" id="shootingStars" type="checkbox"></div>
       <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
        <p class="section-title">Routine du soir</p>
        <div class="field"><label for="routineProfile">Profil à modifier<small>Le profil suit le jour du réveil. L’heure est commune à la routine et à l’alarme sonore.</small></label><select id="routineProfile"><option value="weekday">Semaine</option><option value="weekend">Week-end</option></select></div>
@@ -367,7 +376,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="field"><span>Garder l'écran éveillé<small>Selon les capacités d'iOS</small></span><input aria-label="Garder l&#x27;écran éveillé" id="wake" type="checkbox"></div>
       <div class="actions"><button id="demoFlap" class="action-secondary">Tester les volets</button><button id="refreshWeather" class="action-secondary">Actualiser météo</button></div>
       <p id="weatherStatus" class="status" role="status"></p><p id="wakeStatus" class="status" role="status"></p>
-      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 29 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
+      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 30 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
       <div class="actions"><button class="action-secondary" id="restartTour">Revoir le guide</button></div>
     </section>
   </section>
@@ -388,7 +397,7 @@ const $=id=>document.getElementById(id);
 const root=document.documentElement;
 const palettes={red:'#c8352f',amber:'#ce8127',green:'#2e9a60',blue:'#4a82eb',violet:'#ad78df',cyan:'#35bdc5',pink:'#db6399',white:'#e8e8ee'};
 const themes={station:{color:'#e8e8ee',mode:'flip',dim:25},amber:{color:'#db8b43',mode:'numeric',dim:50},astronomy:{color:'#c63837',mode:'analog',dim:78,deepRed:true},minimal:{color:'#c4c9ce',mode:'numeric',nightMinimal:true}};
-const defaults={mode:'numeric',color:'#f6ba79',bright:82,dim:18,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,alarmMelody:'zen',snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25,thetaVolume:15,thetaDuration:30};
+const defaults={mode:'numeric',color:'#f6ba79',bright:82,dim:18,wake:true,seconds:false,showWeather:true,smartNight:true,nightStart:'22:00',nightEnd:'07:00',nightDim:75,nightMinimal:false,flipPro:true,oledShift:true,sunrise:false,wakeTime:'07:00',sunriseDuration:30,deepRed:false,ambient:false,shootingStars:false,moon:false,flipSound:false,soundAlarm:false,alarmVolume:30,alarmMelody:'zen',snoozeMinutes:9,manualNight:false,motion:false,motionIntensity:3,showCountdown:true,morningBriefing:false,bedsideAuto:false,bedsideMode:'analog',bedsideColor:'red',bedsideBright:25,thetaVolume:15,thetaDuration:30};
 let saved={};try{saved=JSON.parse(localStorage.getItem('nightdial-v1')||'{}')||{}}catch{};
 const state={...defaults,...saved};
 delete state.thetaSound;
@@ -460,7 +469,7 @@ function toast(msg){$('toast').textContent=msg;$('toast').classList.add('visible
 function showHud(){ $('intensityLabel').textContent=Math.round(Number(state.bright))+' %';$('intensityHud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('intensityHud').classList.remove('visible'),1000)}
 function syncControls(){
  for(const id of ['bright','dim','nightStart','nightEnd','nightDim','wakeTime','sunriseDuration','alarmVolume','alarmMelody','snoozeMinutes','motionIntensity','bedsideBright','bedsideMode','bedsideColor','thetaVolume','thetaDuration'])$(id).value=state[id];
- for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];
+ for(const id of ['smartNight','nightMinimal','deepRed','ambient','shootingStars','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).checked=!!state[id];
  $('customColor').value=accent();
  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===state.color)));
  document.querySelectorAll('[data-theme]').forEach(b=>b.setAttribute('aria-pressed',String(state.theme===b.dataset.theme)));
@@ -530,7 +539,6 @@ function bedsideModeAt(now=new Date()){
   return bedsideShowing(now)&&bedsideModes.includes(state.bedsideMode)?state.bedsideMode:state.mode;
 }
 function bedsideAccent(now=new Date()){
-  if(routine)return routine.profile.mode==='flip'?palettes.white:'#f6ba79';
   if(bedsideShowing(now))return palettes[state.bedsideColor]||palettes.red;
   const m=now.getHours()*60+now.getMinutes();
   const deep=state.deepRed&&(state.manualNight||(state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd))));
@@ -575,6 +583,7 @@ function updateAdaptive(now=new Date()){
  if(routine&&now-routine.target>=10*60000)endRoutine();
  updateRoutineDock(now);
  applyBedsideAppearance(now);const m=now.getHours()*60+now.getMinutes();nightActive=!!routine||!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
+ document.body.classList.toggle('shooting-stars',Boolean(state.shootingStars&&nightActive&&!sheetOpen&&document.visibilityState==='visible'&&!reducedMotion()));
  const baseline=clamp(state.dim,0,95)/100;let dim=nightActive?Math.max(baseline,clamp(state.nightDim,25,95)/100):baseline;
  const wake=minuteOfDay(state.wakeTime),duration=clamp(state.sunriseDuration,15,60);let sunlight=0;
  if(routine){
@@ -815,7 +824,7 @@ for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMin
  if(id==='wakeTime')setWakeTime(e.target.value);
  render();
 });
-for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{
+for(const id of ['smartNight','nightMinimal','deepRed','ambient','shootingStars','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{
  state[id]=e.target.checked;
  if(id==='soundAlarm'){
   if(!state.soundAlarm){clearSnooze();stopAlarm()}
@@ -1274,7 +1283,7 @@ function resumeNightDial(){
 }
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState==='visible')resumeNightDial();
- else{stopLoop();clearTimeout(alarmTimer);stopAlarm();syncTheta()}
+ else{document.body.classList.remove('shooting-stars');stopLoop();clearTimeout(alarmTimer);stopAlarm();syncTheta()}
 });
 window.addEventListener('pageshow',resumeNightDial);
 document.addEventListener('pointerdown',()=>{if(state.wake&&(!wakeLock||wakeLock.released))manageWake()},{passive:true});
