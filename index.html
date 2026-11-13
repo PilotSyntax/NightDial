@@ -105,6 +105,7 @@ body.shooting-stars #shootingSky i{animation-play-state:running}
 #bedsideHeader{top:calc(12px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;gap:12px}
 #bedsideHeader strong{color:#f3c89e;font-weight:600;letter-spacing:.04em}
 #bedsideDock{bottom:calc(16px + env(safe-area-inset-bottom));display:grid;gap:7px}
+#bedsideDock[hidden]{display:none}
 #bedsideSummary{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;padding:8px 0 0;border-top:1px solid #35251b;font-size:.82rem}
 #bedsideWake{color:#f4c495;font-variant-numeric:tabular-nums}
 .bedside-button{min-height:44px;color:#f4c495;background:#21150e;border:1px solid #4b3120;border-radius:12px;padding:8px 14px;font-weight:600}
@@ -280,6 +281,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   .onboard-card p{min-height:0}.dots{justify-content:flex-start}
 }
 @media(max-width:345px){.tab-panel{padding:14px 12px 22px}.field span,.field label{font-size:14px}#bedsideWake{font-size:22px}}
+body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body data-mode="numeric">
@@ -337,7 +339,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
        <div class="field"><label for="profileSound">Ambiance de la routine</label><select id="profileSound"><option value="theta">Dérive thêta</option><option value="rain">Pluie douce</option><option value="brown">Bruit brun</option><option value="silent">Silence</option></select></div>
        <div class="field"><label for="thetaVolume">Volume de l’ambiance</label><input id="thetaVolume" type="range" min="5" max="35" step="5" value="15"></div>
        <div class="field"><label for="thetaDuration">Arrêt automatique de l’ambiance</label><select id="thetaDuration"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
-       <div class="actions"><button id="playAmbience" type="button" class="action-secondary">Écouter l’ambiance</button></div>
+       <div class="actions"><button id="routineSettingsButton" type="button" class="action-primary">Lancer la routine</button><button id="playAmbience" type="button" class="action-secondary">Écouter l’ambiance</button></div>
        <p id="thetaStatus" class="status">La lecture démarre quand tu lances la routine. Sur iPhone, utilise les boutons de volume si nécessaire.</p>
        <p id="thetaOffline" class="status" role="status"></p>
        <p class="section-title">Smart Bedside · profils automatiques</p>
@@ -460,7 +462,9 @@ function updateRoutineDock(now=new Date()){
  $('bedsideWake').textContent=wake;
  $('bedsideWake').dateTime=wake;
  $('routineButton').setAttribute('aria-pressed',String(Boolean(routine)));
- $('routineButton').textContent=routine?'Terminer la routine':'Lancer la routine';
+ const action=routine?'Terminer la routine':'Lancer la routine';
+ $('routineButton').textContent=action;
+ $('routineSettingsButton').textContent=action;
  document.body.classList.toggle('routine',Boolean(routine));
 }
 function persist(){try{localStorage.setItem('nightdial-v1',JSON.stringify(state))}catch{}}
@@ -583,6 +587,7 @@ function updateAdaptive(now=new Date()){
  if(routine&&now-routine.target>=10*60000)endRoutine();
  updateRoutineDock(now);
  applyBedsideAppearance(now);const m=now.getHours()*60+now.getMinutes();nightActive=!!routine||!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
+ $('bedsideDock').hidden=nightActive||bedsideShowing(now);
  document.body.classList.toggle('shooting-stars',Boolean(state.shootingStars&&nightActive&&!sheetOpen&&document.visibilityState==='visible'&&!reducedMotion()));
  const baseline=clamp(state.dim,0,95)/100;let dim=nightActive?Math.max(baseline,clamp(state.nightDim,25,95)/100):baseline;
  const wake=minuteOfDay(state.wakeTime),duration=clamp(state.sunriseDuration,15,60);let sunlight=0;
@@ -1000,14 +1005,17 @@ function endRoutine(){
  routine=null;
  stopTheta();
 }
-$('routineButton').addEventListener('click',()=>{
+function toggleRoutine(){
  if(routine)endRoutine();
  else{
   routine=nextRoutine(new Date());
   startTheta(routine.profile.sound);
  }
  render();
-});
+ if(sheetOpen)setSheet(false);
+}
+$('routineButton').addEventListener('click',toggleRoutine);
+$('routineSettingsButton').addEventListener('click',toggleRoutine);
 $('playAmbience').addEventListener('click',()=>{
  if(thetaAudio)stopTheta();
  else startTheta((routine?.profile||state.routineProfiles[profileEditing]).sound);
