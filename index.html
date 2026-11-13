@@ -322,8 +322,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="field"><span>Ciel étoilé</span><input aria-label="Ciel étoilé" id="ambient" type="checkbox"></div>
       <div class="field"><span>Phase lunaire</span><input aria-label="Phase lunaire" id="moon" type="checkbox"></div>
        <p class="section-title">Routine du soir</p>
-       <div class="field"><label for="routineProfile">Profil à modifier<small>Le profil suit le jour du réveil.</small></label><select id="routineProfile"><option value="weekday">Semaine</option><option value="weekend">Week-end</option></select></div>
-       <div class="field"><label for="profileWake">Réveil visuel du profil</label><input id="profileWake" type="time" required></div>
+       <div class="field"><label for="routineProfile">Profil à modifier<small>Le profil suit le jour du réveil. L’heure est commune à la routine et à l’alarme sonore.</small></label><select id="routineProfile"><option value="weekday">Semaine</option><option value="weekend">Week-end</option></select></div>
+       <div class="field"><label for="profileWake">Heure du réveil · commune à tous les profils</label><input id="profileWake" type="time" required></div>
        <div class="field"><label for="profileMode">Cadran de la routine</label><select id="profileMode"><option value="numeric">Chevet ambre</option><option value="flip">Gare de nuit</option><option value="analog">Analogique</option></select></div>
        <div class="field"><label for="profileSound">Ambiance de la routine</label><select id="profileSound"><option value="theta">Dérive thêta</option><option value="rain">Pluie douce</option><option value="brown">Bruit brun</option><option value="silent">Silence</option></select></div>
        <div class="field"><label for="thetaVolume">Volume de l’ambiance</label><input id="thetaVolume" type="range" min="5" max="35" step="5" value="15"></div>
@@ -342,7 +342,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <section class="tab-panel" id="pane-alarm" role="tabpanel" aria-labelledby="tab-alarm">
       <p class="section-title">Réveil progressif</p>
       <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div>
-       <div class="field"><span>Morning Briefing<small>Météo et lever du soleil autour de l’heure du réveil</small></span><input aria-label="Activer le briefing météo du matin" id="morningBriefing" type="checkbox"></div><div class="field"><label for="wakeTime">Heure du réveil hors routine</label><input id="wakeTime" type="time" required></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
+       <div class="field"><span>Morning Briefing<small>Météo et lever du soleil autour de l’heure du réveil</small></span><input aria-label="Activer le briefing météo du matin" id="morningBriefing" type="checkbox"></div><div class="field"><label for="wakeTime">Heure du réveil</label><input id="wakeTime" type="time" required></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
       <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
        <div class="field"><span>Compte à rebours<small>Temps restant jusqu’au prochain réveil · près de l’alarme</small></span><input aria-label="Afficher le temps restant avant le réveil" id="showCountdown" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
@@ -367,7 +367,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       <div class="field"><span>Garder l'écran éveillé<small>Selon les capacités d'iOS</small></span><input aria-label="Garder l&#x27;écran éveillé" id="wake" type="checkbox"></div>
       <div class="actions"><button id="demoFlap" class="action-secondary">Tester les volets</button><button id="refreshWeather" class="action-secondary">Actualiser météo</button></div>
       <p id="weatherStatus" class="status" role="status"></p><p id="wakeStatus" class="status" role="status"></p>
-      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 28 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
+      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 29 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
       <div class="actions"><button class="action-secondary" id="restartTour">Revoir le guide</button></div>
     </section>
   </section>
@@ -407,7 +407,6 @@ const profileFor=day=>day.getDay()===0||day.getDay()===6?'weekend':'weekday';
 state.routineProfiles=Object.fromEntries(Object.keys(profileNames).map(key=>{
  const profile=state.routineProfiles?.[key];
  return [key,{
-  wake:minuteOfDay(profile?.wake)!==null?profile.wake:minuteOfDay(state.wakeTime)!==null?state.wakeTime:'07:00',
   mode:profileModes.includes(profile?.mode)?profile.mode:'numeric',
   sound:Object.hasOwn(ambienceNames,profile?.sound)?profile.sound:'rain'
  }];
@@ -422,17 +421,26 @@ function wakeOnDay(day,wake){
 }
 function nextRoutine(now){
  const day=new Date(now);
- let key=profileFor(day),profile=state.routineProfiles[key],target=wakeOnDay(day,profile.wake);
+ let key=profileFor(day),profile=state.routineProfiles[key],target=wakeOnDay(day,state.wakeTime);
  if(target<=now){
   day.setDate(day.getDate()+1);
-  key=profileFor(day);profile=state.routineProfiles[key];target=wakeOnDay(day,profile.wake);
+  key=profileFor(day);profile=state.routineProfiles[key];target=wakeOnDay(day,state.wakeTime);
  }
  return {key,profile:{...profile},target};
+}
+function setWakeTime(value){
+ if(minuteOfDay(value)===null)return false;
+ state.wakeTime=value;
+ if(routine)routine.target=wakeOnDay(routine.target,value);
+ clearSnooze();
+ if(thetaAudio){thetaEndAt=ambienceEnd(thetaStartedAt);scheduleThetaEnd()}
+ syncAlarm();
+ return true;
 }
 function syncProfileEditor(){
  const profile=state.routineProfiles[profileEditing];
  $('routineProfile').value=profileEditing;
- $('profileWake').value=profile.wake;
+ $('profileWake').value=state.wakeTime;
  $('profileMode').value=profile.mode;
  $('profileSound').value=profile.sound;
 }
@@ -783,7 +791,8 @@ $('routineProfile').addEventListener('change',e=>{profileEditing=e.target.value;
 for(const [id,key] of [['profileWake','wake'],['profileMode','mode'],['profileSound','sound']]){
  $(id).addEventListener('change',e=>{
   const value=e.target.value;
-  if(key!=='wake'||minuteOfDay(value)!==null)state.routineProfiles[profileEditing][key]=value;
+  if(key==='wake')setWakeTime(value);
+  else state.routineProfiles[profileEditing][key]=value;
   render();
  });
 }
@@ -803,7 +812,7 @@ for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMin
  if(id==='wakeTime'&&minuteOfDay(e.target.value)===null){e.target.value=state.wakeTime;return}
  state[id]=['sunriseDuration','snoozeMinutes','thetaDuration'].includes(id)?+e.target.value:e.target.value;
  if(id==='thetaDuration'&&thetaAudio){thetaEndAt=ambienceEnd(thetaStartedAt);scheduleThetaEnd()}
- if(id==='wakeTime'){clearSnooze();syncAlarm()}
+ if(id==='wakeTime')setWakeTime(e.target.value);
  render();
 });
 for(const id of ['smartNight','nightMinimal','deepRed','ambient','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{

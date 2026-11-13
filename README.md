@@ -2,6 +2,13 @@
 
 Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript sans compte Apple Developer.
 
+## v29 — Heure de réveil unifiée
+
+- Une seule heure pour l’alarme sonore, le réveil visuel, le compte à rebours et la routine. Elle se règle depuis **Réglages → Réveil** ou **Nuit → Routine du soir**.
+- Une modification s’applique immédiatement à la routine en cours, sans la relancer.
+- Les profils **Semaine** et **Week-end** conservent leur cadran et leur ambiance ; l’heure est commune aux deux.
+- À la mise à jour, l’heure de l’alarme existante (`wakeTime`) est conservée et remplace les anciennes heures propres aux profils. Cache `nightdial-premium-v29`.
+
 ## v28 : nouvelle interface
 
 - **Identité** : emblème NightDial (cadran et croissant), écran de lancement et guide de bienvenue redessinés.
@@ -13,7 +20,7 @@ Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript
 
 - Le cadran numérique **Chevet ambre** s’affiche par défaut lors d’une nouvelle installation. Le cadran **Gare de nuit** conserve ses volets mécaniques. Les préférences d’affichage déjà enregistrées sont reprises.
 - **Lancer la routine** applique le cadran du profil, atténue l’affichage et démarre l’ambiance pendant 30 minutes par défaut. Le cadran affiche le temps restant. La routine garde le lever de soleil visuel à l’heure affichée tant que NightDial reste ouvert. Elle prend fin dix minutes après le réveil visuel ou via **Terminer la routine**.
-- Dans **Réglages → Nuit → Routine du soir**, personnalise **Semaine** et **Week-end**. Le profil suit la date du réveil à venir : vendredi soir prépare le samedi et dimanche soir prépare le lundi. Le réveil sonore de l’onglet **Réveil** garde sa propre heure.
+- Dans **Réglages → Nuit → Routine du soir**, personnalise **Semaine** et **Week-end**. Le profil suit la date du réveil à venir : vendredi soir prépare le samedi et dimanche soir prépare le lundi. Depuis la v29, le réveil sonore et la routine partagent la même heure.
 - **Pluie douce** et **Bruit brun** sont inclus et disponibles hors ligne après installation du cache. **Dérive thêta** est mise en cache après une première lecture en ligne. Le fondu des 20 dernières secondes dépend du contrôle du volume par le navigateur. Safari peut ignorer ce réglage sur iPhone.
 - Après fermeture ou rechargement, relance la routine pour démarrer une nouvelle session. Pour les réveils importants, utilise l’app Horloge d’iOS. Le réveil progressif de NightDial dépend du maintien de l’écran et de l’exécution de la PWA au premier plan.
 
