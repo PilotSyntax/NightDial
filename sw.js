@@ -1,8 +1,8 @@
-const CACHE = 'nightdial-premium-v31';
-const THETA_CACHE = 'nightdial-theta-v1';
+const CACHE = 'nightdial-premium-v32';
+const THETA_CACHE = 'nightdial-theta-v2';
 const scope = new URL(self.registration.scope);
 const index = new URL('index.html', scope);
-const track = new URL('derive-theta-428hz.mp3', scope);
+const track = new URL('NightDial_Derive_10min.mp3', scope);
 const bundledTracks = ['pluie-douce.wav', 'bruit-brun.wav']
   .map(path => new URL(path, scope).href);
 const shell = new Set([
@@ -26,7 +26,7 @@ self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys
-      .filter(key => /^nightdial-(?:premium-)?v\d+$/.test(key) && key !== CACHE)
+      .filter(key => key === 'nightdial-theta-v1' || (/^nightdial-(?:premium-)?v\d+$/.test(key) && key !== CACHE))
       .map(key => caches.delete(key)));
     await self.clients.claim();
   })());

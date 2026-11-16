@@ -106,11 +106,16 @@ body.shooting-stars #shootingSky i{animation-play-state:running}
 #bedsideHeader strong{color:#f3c89e;font-weight:600;letter-spacing:.04em}
 #bedsideDock{bottom:calc(16px + env(safe-area-inset-bottom));display:grid;gap:7px}
 #bedsideDock[hidden]{display:none}
+#nightAudioControls{position:fixed;z-index:5;bottom:calc(16px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:grid;justify-items:center;gap:5px;color:var(--accent)}
+#nightTheta{touch-action:manipulation}
+body.alarming #nightAudioControls,body:has(#onboard:not([hidden])) #nightAudioControls{visibility:hidden}
 #bedsideSummary{display:flex;align-items:center;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;padding:8px 0 0;border-top:1px solid #35251b;font-size:.82rem}
 #bedsideWake{color:#f4c495;font-variant-numeric:tabular-nums}
 .bedside-button{min-height:44px;color:#f4c495;background:#21150e;border:1px solid #4b3120;border-radius:12px;padding:8px 14px;font-weight:600}
 #openSettings{background:transparent;border-color:transparent;font-size:.85rem}
-#routineButton{width:100%}
+.dock-actions{display:flex;flex-wrap:wrap;gap:8px}
+.dock-actions button{flex:1 1 auto;touch-action:manipulation}
+#pane-alarm .status a{color:var(--accent)}
 #routineButton[aria-pressed="true"]{background:#110b07;color:#cfb39b;font-weight:400}
 #routineStatus{font-size:.78rem;text-align:center;margin:0}
 #toast{top:calc(62px + env(safe-area-inset-top))}
@@ -282,6 +287,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 }
 @media(max-width:345px){.tab-panel{padding:14px 12px 22px}.field span,.field label{font-size:14px}#bedsideWake{font-size:22px}}
 body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-area-inset-bottom))}
+body:has(#nightAudioControls:not([hidden])) #clockStage{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
 </style>
 </head>
 <body data-mode="numeric">
@@ -307,7 +313,10 @@ body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-a
   </header>
   <div id="bedsideDock">
     <div id="bedsideSummary"><span class="dock-meta"><small>Routine du soir</small><span id="bedsideProfile"></span></span><span class="dock-wake"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 18.5h17M7 18.5a5 5 0 0 1 10 0M12 6.5v3M5.3 11.2l1.9 1.9M18.7 11.2l-1.9 1.9"/></svg><time id="bedsideWake"></time></span></div>
-    <button id="routineButton" class="bedside-button" type="button" aria-pressed="false">Lancer la routine</button>
+    <div class="dock-actions"><button id="routineButton" class="bedside-button" type="button" aria-pressed="false">Lancer la routine</button></div>
+  </div>
+  <div id="nightAudioControls" hidden>
+    <button id="nightTheta" class="bedside-button" type="button" aria-pressed="false">Écouter Dérive thêta</button>
     <p id="routineStatus" role="status" hidden></p>
   </div>
   <div id="motionProof" role="status" aria-live="polite" hidden>Aperçu de la parallaxe 3D</div>
@@ -338,7 +347,7 @@ body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-a
        <div class="field"><label for="profileMode">Cadran de la routine</label><select id="profileMode"><option value="numeric">Chevet ambre</option><option value="flip">Gare de nuit</option><option value="analog">Analogique</option></select></div>
        <div class="field"><label for="profileSound">Ambiance de la routine</label><select id="profileSound"><option value="theta">Dérive thêta</option><option value="rain">Pluie douce</option><option value="brown">Bruit brun</option><option value="silent">Silence</option></select></div>
        <div class="field"><label for="thetaVolume">Volume de l’ambiance</label><input id="thetaVolume" type="range" min="5" max="35" step="5" value="15"></div>
-       <div class="field"><label for="thetaDuration">Arrêt automatique de l’ambiance</label><select id="thetaDuration"><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
+       <div class="field"><label for="thetaDuration">Arrêt automatique de l’ambiance</label><select id="thetaDuration"><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
        <div class="actions"><button id="routineSettingsButton" type="button" class="action-primary">Lancer la routine</button><button id="playAmbience" type="button" class="action-secondary">Écouter l’ambiance</button></div>
        <p id="thetaStatus" class="status">La lecture démarre quand tu lances la routine. Sur iPhone, utilise les boutons de volume si nécessaire.</p>
        <p id="thetaOffline" class="status" role="status"></p>
@@ -354,13 +363,14 @@ body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-a
       <p class="section-title">Réveil progressif</p>
       <div class="field"><span>Lever de soleil visuel</span><input aria-label="Lever de soleil visuel" id="sunrise" type="checkbox"></div>
        <div class="field"><span>Morning Briefing<small>Météo et lever du soleil autour de l’heure du réveil</small></span><input aria-label="Activer le briefing météo du matin" id="morningBriefing" type="checkbox"></div><div class="field"><label for="wakeTime">Heure du réveil</label><input id="wakeTime" type="time" required></div><div class="field"><span>Durée</span><select aria-label="Durée" id="sunriseDuration"><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></div>
-      <div class="field"><span>Son progressif<small>Seulement quand l'app reste active</small></span><input aria-label="Son progressif" id="soundAlarm" type="checkbox"></div>
+       <div class="field"><span>Réveil sonore<small>Son progressif quand NightDial reste visible</small></span><input aria-label="Réveil sonore" id="soundAlarm" type="checkbox"></div>
        <div class="field"><span>Compte à rebours<small>Temps restant jusqu’au prochain réveil · près de l’alarme</small></span><input aria-label="Afficher le temps restant avant le réveil" id="showCountdown" type="checkbox"></div>
       <div class="field"><span>Volume maximal</span><input aria-label="Volume maximal" id="alarmVolume" type="range" min="5" max="80" value="30"></div>
        <div class="field"><span>Sonnerie du réveil<small>Trois mélodies originales, générées sur l’appareil</small></span><select id="alarmMelody" aria-label="Sonnerie du réveil"><option value="zen">Zen · cloche douce</option><option value="nature">Nature · oiseaux synthétiques</option><option value="digital">Digital · impulsions claires</option></select></div>
       <div class="field"><span>Rappel (snooze)</span><select aria-label="Rappel (snooze)" id="snoozeMinutes"><option value="5">5 minutes</option><option value="9">9 minutes</option><option value="10">10 minutes</option></select></div>
       <div class="actions"><button type="button" class="action-secondary" id="previewMorning">Tester le briefing</button><button class="action-secondary" id="previewSunrise">Aperçu lever de soleil</button><button class="action-secondary" id="testAudio" type="button">Tester le son (iPhone)</button><button class="action-secondary" id="previewMelody" type="button">Écouter et préparer la sonnerie</button><button class="action-secondary" id="testWebAudio" type="button">Diagnostic Web Audio</button></div><p id="audioTestStatus" class="status" role="status" aria-live="polite">Test iPhone : son audio natif généré localement. Le diagnostic Web Audio teste séparément les oscillateurs. Vérifie aussi la sortie audio et le mode silencieux.</p>
-      <p class="status">Après avoir ouvert NightDial, touche « Écouter et préparer la sonnerie », puis garde l’app visible et l’écran éveillé. Safari peut refuser la lecture à l’heure prévue. Utilise l’alarme native iOS pour les réveils importants.</p>
+       <div class="actions"><button class="action-secondary" id="testScheduledAlarm" type="button">Tester le réveil dans 15 s</button></div>
+       <p class="status">Active « Réveil sonore », puis touche « Écouter et préparer la sonnerie » après chaque ouverture. Garde NightDial au premier plan, écran éveillé. Pour un réveil avec l’écran verrouillé, règle aussi l’heure dans <a href="https://support.apple.com/fr-fr/118444">Horloge sur iPhone</a> ou demande à Siri.</p>
     </section>
     <section class="tab-panel" id="pane-advanced" role="tabpanel" aria-labelledby="tab-advanced">
       <p class="section-title">Affichage et énergie</p>
@@ -378,11 +388,11 @@ body:has(#bedsideDock[hidden]) #clockStage{padding-bottom:calc(26px + env(safe-a
       <div class="field"><span>Garder l'écran éveillé<small>Selon les capacités d'iOS</small></span><input aria-label="Garder l&#x27;écran éveillé" id="wake" type="checkbox"></div>
       <div class="actions"><button id="demoFlap" class="action-secondary">Tester les volets</button><button id="refreshWeather" class="action-secondary">Actualiser météo</button></div>
       <p id="weatherStatus" class="status" role="status"></p><p id="wakeStatus" class="status" role="status"></p>
-      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 30 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
+      <p class="section-title">À propos</p><div class="about"><div class="about-head"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="#ndMark"/></svg><div><b>NightDial</b><span>Version 32 · Horloge de chevet</span></div></div><p>Aucun compte, aucun suivi publicitaire. Tes préférences restent sur cet appareil et NightDial fonctionne hors ligne une fois installé.</p><p>La météo provient d’Open-Meteo et le nom de la ville de BigDataCloud, uniquement si tu autorises la localisation.</p></div>
       <div class="actions"><button class="action-secondary" id="restartTour">Revoir le guide</button></div>
     </section>
   </section>
-  <div id="alarmControls"><span id="alarmStatus" role="status"></span><button id="snoozeAlarm">Reporter</button><button id="stopAlarm">Arrêter</button></div>
+  <div id="alarmControls"><span id="alarmStatus" role="status"></span><button id="retryAlarm" class="bedside-button" type="button" hidden>Faire sonner</button><button id="snoozeAlarm" type="button">Reporter</button><button id="stopAlarm" type="button">Arrêter</button></div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="onboard" aria-label="Bienvenue dans NightDial" role="dialog" aria-modal="true" hidden>
     <div class="onboard-card"><div class="onboard-art" id="tourArt" aria-hidden="true">12:48</div><h1 id="tourTitle">NightDial</h1><p id="tourText"></p><div class="dots" id="tourDots"></div><div class="onboard-actions"><button id="tourNext" class="action-primary">Continuer</button><button id="tourSkip" class="ghost">Passer</button></div></div>
@@ -531,7 +541,7 @@ function updateCountdown(now=new Date()){
     (alarmActive?', '+value:', dans '+count.description));
 }
 /* v22 Smart Bedside: reversible presentation-only profiles. Never overwrite daytime preferences. */
-let bedsidePreviewUntil=0;
+let bedsidePreviewUntil=0,nightClockMode=null;
 const bedsideModes=['analog','numeric','flip'];
 function bedsideActiveFor(now=new Date()){
   const m=now.getHours()*60+now.getMinutes();
@@ -540,6 +550,8 @@ function bedsideActiveFor(now=new Date()){
 function bedsideShowing(now=new Date()){return bedsideActiveFor(now)||Date.now()<bedsidePreviewUntil}
 function bedsideModeAt(now=new Date()){
   if(routine)return routine.profile.mode;
+  if(!isNightMode(now))nightClockMode=null;
+  else if(nightClockMode)return nightClockMode;
   return bedsideShowing(now)&&bedsideModes.includes(state.bedsideMode)?state.bedsideMode:state.mode;
 }
 function bedsideAccent(now=new Date()){
@@ -589,6 +601,8 @@ function updateAdaptive(now=new Date()){
  applyBedsideAppearance(now);const m=now.getHours()*60+now.getMinutes();nightActive=!!routine||!!state.manualNight||(!!state.smartNight&&inSchedule(m,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
  $('bedsideDock').hidden=nightActive||bedsideShowing(now);
  document.body.classList.toggle('shooting-stars',Boolean(state.shootingStars&&nightActive&&!sheetOpen&&document.visibilityState==='visible'&&!reducedMotion()));
+ $('nightAudioControls').hidden=!isNightMode(now);
+ if($('nightAudioControls').hidden)$('routineStatus').hidden=true;
  const baseline=clamp(state.dim,0,95)/100;let dim=nightActive?Math.max(baseline,clamp(state.nightDim,25,95)/100):baseline;
  const wake=minuteOfDay(state.wakeTime),duration=clamp(state.sunriseDuration,15,60);let sunlight=0;
  if(routine){
@@ -791,11 +805,23 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState!==
 
 // User gesture controls: pointer events prevent synthetic touch-click conflicts.
 let sheetOpen=false,gesture=null,lastTap=0,tapTimer;
-function setSheet(open){sheetOpen=open;$('sheet').classList.toggle('open',open);$('sheet').setAttribute('aria-hidden',String(!open));$('sheet').inert=!open;for(const id of ['clockStage','bedsideHeader','bedsideDock'])$(id).inert=open;$('scrim').classList.toggle('visible',open);$('scrim').setAttribute('aria-hidden',String(!open));updateAdaptive();syncMotion();if(open){syncControls();profileEditing=(routine||nextRoutine(new Date())).key;syncProfileEditor();$('closeSheet').focus()}else $('clockStage').focus({preventScroll:true})}
-function changeMode(direction){const modes=['analog','numeric','flip'];const appearance=routine?.profile||state;const i=Math.max(0,modes.indexOf(appearance.mode));appearance.mode=modes[(i+direction+3)%3];render();toast(({analog:'Analogique',numeric:'Numérique',flip:'Gare'})[appearance.mode])}
+function setSheet(open){sheetOpen=open;$('sheet').classList.toggle('open',open);$('sheet').setAttribute('aria-hidden',String(!open));$('sheet').inert=!open;for(const id of ['clockStage','bedsideHeader','bedsideDock','nightAudioControls'])$(id).inert=open;$('scrim').classList.toggle('visible',open);$('scrim').setAttribute('aria-hidden',String(!open));updateAdaptive();syncMotion();if(open){syncControls();profileEditing=(routine||nextRoutine(new Date())).key;syncProfileEditor();$('closeSheet').focus()}else $('clockStage').focus({preventScroll:true})}
+function changeMode(direction){
+ const now=new Date(),index=bedsideModes.indexOf(bedsideModeAt(now));
+ const mode=bedsideModes[(Math.max(0,index)+direction+bedsideModes.length)%bedsideModes.length];
+ if(routine)routine.profile.mode=mode;
+ else if(isNightMode(now))nightClockMode=mode;
+ else if(bedsideShowing(now))state.bedsideMode=mode;
+ else state.mode=mode;
+ render();toast(({analog:'Analogique',numeric:'Numérique',flip:'Gare'})[mode]);
+}
 function toggleNight(){if(routine){endRoutine();render();return}state.manualNight=!state.manualNight;render();toast(state.manualNight?'Mode nuit manuel':'Mode nuit automatique')}
-$('clockStage').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;gesture={x:e.clientX,y:e.clientY,id:e.pointerId};});
-$('clockStage').addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)return;const start=gesture;gesture=null;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.max(Math.abs(dx),Math.abs(dy))>44){clearTimeout(tapTimer);if(Math.abs(dx)>Math.abs(dy)*1.25){changeMode(dx<0?1:-1)}else if(Math.abs(dy)>Math.abs(dx)*1.25){state.bright=clamp(Number(state.bright)-dy/3,5,100);render();showHud()}return}
+$('clockStage').addEventListener('pointerdown',e=>{
+ if(!e.isPrimary||e.button!==0||e.target.closest('button'))return;
+ if(e.pointerType==='mouse')$('clockStage').setPointerCapture(e.pointerId);
+ gesture={x:e.clientX,y:e.clientY,id:e.pointerId};
+});
+$('clockStage').addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)return;const start=gesture;gesture=null;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.max(Math.abs(dx),Math.abs(dy))>44){clearTimeout(tapTimer);lastTap=0;if(Math.abs(dx)>Math.abs(dy)*1.25){changeMode(dx<0?1:-1)}else if(Math.abs(dy)>Math.abs(dx)*1.25){state.bright=clamp(Number(state.bright)-dy/3,5,100);render();showHud()}return}
  const n=Date.now();if(n-lastTap<300){clearTimeout(tapTimer);lastTap=0;toggleNight()}else{lastTap=n;tapTimer=setTimeout(()=>{lastTap=0;setSheet(true)},310)} });
 $('clockStage').addEventListener('pointercancel',()=>gesture=null);
 $('clockStage').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();changeMode(e.key==='ArrowLeft'?1:-1)}else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();state.bright=clamp(Number(state.bright)+(e.key==='ArrowUp'?5:-5),5,100);render();showHud()}else if(e.key==='Enter'||e.key===' '){e.preventDefault();setSheet(true)}else if(e.key==='n'||e.key==='N'){toggleNight()}});
@@ -832,7 +858,7 @@ for(const id of ['nightStart','nightEnd','wakeTime','sunriseDuration','snoozeMin
 for(const id of ['smartNight','nightMinimal','deepRed','ambient','shootingStars','moon','sunrise','soundAlarm','oledShift','motion','showCountdown','morningBriefing','bedsideAuto','seconds','flipPro','flipSound','showWeather','wake'])$(id).addEventListener('change',e=>{
  state[id]=e.target.checked;
  if(id==='soundAlarm'){
-  if(!state.soundAlarm){clearSnooze();stopAlarm()}
+  if(!state.soundAlarm){clearSnooze();if(!alarmIsTest)stopAlarm()}
   syncAlarm();
  }
  render();
@@ -910,8 +936,8 @@ async function updateWeather(force=false){if(weatherBusy||(!state.showWeather&&!
 $('refreshWeather').addEventListener('click',()=>updateWeather(true));setInterval(()=>{if(document.visibilityState==='visible')updateWeather()},15*60000);
 // Web Audio: sound is created by oscillators, gated behind a user gesture.
 
-const ambienceTracks={theta:'./derive-theta-428hz.mp3',rain:'./pluie-douce.wav',brown:'./bruit-brun.wav'};
-const thetaDurationMs=()=>clamp(state.thetaDuration,15,60)*60000;
+const ambienceTracks={theta:'./NightDial_Derive_10min.mp3',rain:'./pluie-douce.wav',brown:'./bruit-brun.wav'};
+const thetaDurationMs=()=>clamp(state.thetaDuration,10,60)*60000;
 const ambienceEnd=startedAt=>Math.min(startedAt+thetaDurationMs(),routine?.target.getTime()??Infinity);
 let thetaAudio=null,thetaStartedAt=0,thetaEndAt=0,thetaTimer=null,thetaRefresh=null,thetaPhase='idle',ambienceKey=null;
 let thetaPlayed=false;
@@ -931,11 +957,16 @@ function thetaStatus(message){
  if(node.textContent!==message)node.textContent=message;
  const dock=$('routineStatus');
  if(dock.textContent!==message)dock.textContent=message;
- dock.hidden=!routine||!message;
+ dock.hidden=!(routine||thetaAudio||isNightMode(new Date()))||!message;
 }
-function thetaNight(now){
+function isNightMode(now){
  const minute=now.getHours()*60+now.getMinutes();
- return !!routine||!!state.manualNight||!!state.smartNight&&inSchedule(minute,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd));
+ return Boolean(routine||state.manualNight||bedsideActiveFor(now)||state.smartNight&&inSchedule(minute,minuteOfDay(state.nightStart),minuteOfDay(state.nightEnd)));
+}
+function syncNightTheta(){
+ const playing=ambienceKey==='theta';
+ $('nightTheta').textContent=playing?'Arrêter Dérive thêta':'Écouter Dérive thêta';
+ $('nightTheta').setAttribute('aria-pressed',String(playing));
 }
 function stopTheta(message='Ambiance arrêtée.'){
  clearTimeout(thetaTimer);clearInterval(thetaRefresh);
@@ -943,11 +974,12 @@ function stopTheta(message='Ambiance arrêtée.'){
  thetaAudio=null;thetaPhase='idle';thetaStartedAt=0;thetaEndAt=0;ambienceKey=null;
  if(audio){audio.pause();audio.removeAttribute('src');audio.load()}
  $('playAmbience').textContent='Écouter l’ambiance';
+ syncNightTheta();
  thetaStatus(message);
 }
 function syncTheta(now=new Date()){
  if(!thetaAudio)return;
- if(!thetaNight(now)){stopTheta('Lecture arrêtée : sortie du mode nuit.');return}
+ if(!isNightMode(now)){stopTheta('Lecture arrêtée : sortie du mode nuit.');return}
  if(now.getTime()>=thetaEndAt){stopTheta('Minuterie musicale terminée.');return}
  applyThetaVolume(now.getTime());
  if(thetaPhase==='playing'){
@@ -965,7 +997,7 @@ function applyThetaVolume(now=Date.now()){
  if(thetaAudio)thetaAudio.volume=clamp(state.thetaVolume,5,35)/100*clamp((thetaEndAt-now)/20000,0,1);
 }
 function startTheta(key){
- if(!thetaNight(new Date())){stopTheta('Active le mode nuit pour lancer une ambiance.');return}
+ if(!isNightMode(new Date())){stopTheta('Active le mode nuit pour lancer une ambiance.');return}
  if(alarmActive){stopTheta('Arrête le réveil avant de lancer une ambiance.');return}
  if(key==='silent'){stopTheta('Ambiance silencieuse.');return}
  if(thetaAudio)stopTheta();
@@ -976,6 +1008,7 @@ function startTheta(key){
   thetaStartedAt=Date.now();thetaEndAt=ambienceEnd(thetaStartedAt);
   applyThetaVolume();
   $('playAmbience').textContent='Arrêter l’ambiance';
+  syncNightTheta();
   thetaStatus('Démarrage · '+ambienceNames[key]+'…');
   audio.onplaying=()=>{
    if(thetaAudio!==audio)return;
@@ -1020,6 +1053,10 @@ $('playAmbience').addEventListener('click',()=>{
  if(thetaAudio)stopTheta();
  else startTheta((routine?.profile||state.routineProfiles[profileEditing]).sound);
 });
+$('nightTheta').addEventListener('click',()=>{
+ if(ambienceKey==='theta')stopTheta();
+ else startTheta('theta');
+});
 
 let audioCtx=null,alarmActive=false,alarmPhase='idle',alarmTimer=null;
 // iOS 26+ can render Web Audio with state='running' but no audible output.
@@ -1050,6 +1087,7 @@ function makeChimeWav(level=.65){
 function stopNativeTest(){
   if(nativeTestAudio){nativeTestAudio.pause();nativeTestAudio.removeAttribute('src');nativeTestAudio.load();nativeTestAudio=null}
   if(nativeTestUrl){URL.revokeObjectURL(nativeTestUrl);nativeTestUrl=null}
+  $('testAudio').disabled=false;
 }
 function playNativeTest(){
   // This function is called synchronously inside the user's click (iOS activation).
@@ -1115,7 +1153,8 @@ function playTone(freq=520,seconds=.14,volume=.04,delay=0){
 /* v23: native iOS-compatible alarm engine. WAV files include a gain ramp in the
    PCM samples because iOS Safari does not reliably honor HTMLMediaElement.volume.
    Automatic playback still depends on Safari policies: no background guarantee. */
-let alarmNativeAudio=null,alarmNativeUrl=null,alarmAttempt=0,melodyPreview=null;
+let alarmNativeAudio=null,alarmNativeUrl=null,alarmSoundKey='',alarmAttempt=0,melodyPreview=false;
+let alarmTestAt=0,alarmIsTest=false;
 const alarmLabels={starting:'Démarrage du son…',playing:'Sonnerie en cours',blocked:'Sonnerie bloquée',paused:'Sonnerie interrompue'};
 const melodyNames={zen:'Zen',nature:'Nature',digital:'Digital'};
 function normalizeMelody(value){return Object.hasOwn(melodyNames,value)?value:'zen'}
@@ -1171,73 +1210,129 @@ function makeMelodyWav(kind='zen',duration=4,volume=.6,progressive=false){
 }
 function alarmPlayer(){
  if(!alarmNativeAudio)alarmNativeAudio=new Audio();
+ const kind=normalizeMelody(state.alarmMelody);
+ const level=.25+clamp(state.alarmVolume,5,80)/80*.55;
+ const key=kind+':'+level;
+ if(alarmSoundKey!==key||alarmNativeAudio.error){
+   const previous=alarmNativeUrl;
+   alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,120,level,true));
+   alarmNativeAudio.src=alarmNativeUrl;
+   alarmSoundKey=key;
+   if(previous)URL.revokeObjectURL(previous);
+ }
  return alarmNativeAudio;
 }
-function releaseAlarmSource(){
- const audio=alarmNativeAudio;
- if(audio){
-  audio.onplaying=audio.onpause=audio.onended=audio.onerror=null;
-  audio.pause();audio.removeAttribute('src');audio.load();
- }
- if(alarmNativeUrl){URL.revokeObjectURL(alarmNativeUrl);alarmNativeUrl=null}
+function pauseAlarmPlayer(){
+ if(!alarmNativeAudio)return;
+ alarmNativeAudio.onplaying=alarmNativeAudio.onpause=alarmNativeAudio.onerror=null;
+ alarmNativeAudio.pause();
+}
+function updateAlarmTestButton(){
+ const button=$('testScheduledAlarm');
+ button.disabled=melodyPreview||alarmActive;
+ button.textContent=alarmTestAt?'Annuler le test du réveil':'Tester le réveil dans 15 s';
 }
 function disposeMelodyPreview(){
  if(!melodyPreview)return;
- melodyPreview=null;$('previewMelody').disabled=false;releaseAlarmSource();
+ melodyPreview=false;
+ $('previewMelody').disabled=false;
+ pauseAlarmPlayer();
+ updateAlarmTestButton();
 }
-function previewAlarmMelody(){
- const status=$('audioTestStatus'),button=$('previewMelody'),kind=normalizeMelody(state.alarmMelody);
+function previewAlarmMelody(test=false){
+ const status=$('audioTestStatus'),kind=normalizeMelody(state.alarmMelody);
  if(alarmActive){status.textContent='Arrête le réveil avant d’écouter un aperçu.';return}
  disposeMelodyPreview();stopNativeTest();setPlaybackAudioSession();
  const attempt=++alarmAttempt;
- try{
-  const audio=alarmPlayer();melodyPreview=audio;
-  alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,5,.35+clamp(state.alarmVolume,5,80)/80*.40,false));
-  audio.src=alarmNativeUrl;audio.loop=false;button.disabled=true;
-  const finish=message=>{
+ let excerptTimer;
+ const finish=(message,ready=false)=>{
    if(attempt!==alarmAttempt||!melodyPreview)return;
-   disposeMelodyPreview();status.textContent=message;
+   clearTimeout(excerptTimer);
+   disposeMelodyPreview();
+   status.textContent=message;
+   if(test&&ready){
+     alarmTestAt=Date.now()+15000;
+     updateAlarmTestButton();
+     syncAlarm();
+     toast('Test du réveil dans 15 s');
+   }
+ };
+ try{
+   const audio=alarmPlayer();
+   melodyPreview=true;
+   $('previewMelody').disabled=true;
+   updateAlarmTestButton();
+   audio.loop=false;
+   // Preview the full-volume section of the very same sound used by the timer.
+   audio.currentTime=90;
+   audio.onplaying=()=>{
+     status.textContent='Aperçu '+melodyNames[kind]+' en cours.';
+     if(excerptTimer)return;
+     excerptTimer=setTimeout(()=>finish(test?'Test programmé dans 15 s. Garde NightDial visible.':'Sonnerie préparée. Garde NightDial visible, écran éveillé.',true),5000);
   };
-  audio.onplaying=()=>{status.textContent='Aperçu '+melodyNames[kind]+' en cours.'};
-  audio.onended=()=>finish('Aperçu terminé. Garde NightDial au premier plan jusqu’au réveil.');
+   audio.onpause=()=>finish('Aperçu interrompu. Réessaie depuis les réglages.');
   audio.onerror=()=>finish('Aperçu indisponible : erreur du lecteur audio.');
   audio.play()?.catch(error=>finish('Aperçu bloqué ('+(error?.name||'lecture refusée')+').'));
-  setTimeout(()=>finish('Aperçu arrêté.'),8000);
+   setTimeout(()=>finish('Aperçu sans réponse. Réessaie depuis les réglages.'),12000);
  }catch{disposeMelodyPreview();status.textContent='Impossible de préparer la sonnerie.'}
 }
 function setAlarmPhase(phase){
- alarmPhase=phase;$('alarmStatus').textContent=alarmLabels[phase]||'';updateCountdown();
+ alarmPhase=phase;
+ const label=alarmLabels[phase];
+ $('alarmStatus').textContent=label&&alarmIsTest?'Test du réveil · '+label:label||'';
+ $('retryAlarm').hidden=phase!=='blocked'&&phase!=='paused';
+ $('snoozeAlarm').hidden=alarmIsTest;
+ updateAlarmTestButton();
+ updateCountdown();
 }
 function alarmAudioFailed(reason){
  setAlarmPhase('blocked');
- $('audioTestStatus').textContent='Réveil : lecture bloquée ('+reason+'). Utilise l’alarme native iOS.';
+ $('audioTestStatus').textContent='Lecture bloquée ('+reason+'). Touche « Faire sonner » pour réessayer.';
 }
 function beginAlarmAudio(attempt){
- setPlaybackAudioSession();disposeMelodyPreview();stopNativeTest();
+ setPlaybackAudioSession();
  try{
-  const kind=normalizeMelody(state.alarmMelody);
-  const level=Math.min(.85,.25+clamp(state.alarmVolume,5,80)/80*.55);
   const audio=alarmPlayer();
-  alarmNativeUrl=URL.createObjectURL(makeMelodyWav(kind,120,level,true));
-  audio.src=alarmNativeUrl;audio.loop=true;
-  audio.onplaying=()=>{if(attempt===alarmAttempt)setAlarmPhase('playing')};
+   audio.currentTime=0;
+   audio.loop=true;
+   audio.onplaying=()=>{
+     if(attempt!==alarmAttempt)return;
+     setAlarmPhase('playing');
+     if(alarmIsTest)$('audioTestStatus').textContent='Test déclenché. As-tu entendu la sonnerie ?';
+   };
   audio.onpause=()=>{if(attempt===alarmAttempt&&audio.paused&&alarmPhase==='playing')setAlarmPhase('paused')};
   audio.onerror=()=>{if(attempt===alarmAttempt)alarmAudioFailed('erreur média '+(audio.error?.code||'?'))};
   audio.play()?.catch(error=>{
    if(attempt===alarmAttempt)alarmAudioFailed(error?.name||'autorisation manquante');
   });
+   setTimeout(()=>{
+     if(attempt===alarmAttempt&&alarmPhase==='starting')alarmAudioFailed('délai de lecture dépassé');
+   },8000);
  }catch(error){alarmAudioFailed(error?.message||'erreur du lecteur')}
 }
-$('previewMelody').addEventListener('click',previewAlarmMelody);
+$('previewMelody').addEventListener('click',()=>previewAlarmMelody());
+$('testScheduledAlarm').addEventListener('click',()=>{
+ if(alarmTestAt){
+   alarmTestAt=0;updateAlarmTestButton();syncAlarm();
+   $('audioTestStatus').textContent='Test annulé.';
+ }else previewAlarmMelody(true);
+});
+$('retryAlarm').addEventListener('click',()=>{
+ setAlarmPhase('starting');
+ beginAlarmAudio(++alarmAttempt);
+});
 function playClick(){if(state.flipSound&&audioCtx)playTone(390,.055,.014)}
-function startAlarm(){
+function startAlarm(test=false){
  if(thetaAudio)stopTheta('Arrêté pour laisser place au réveil.');
+ disposeMelodyPreview();stopNativeTest();
+ alarmTestAt=0;alarmIsTest=test;
  alarmActive=true;document.body.classList.add('alarming');setAlarmPhase('starting');
  beginAlarmAudio(++alarmAttempt);
+ if(test)setTimeout(()=>{if(alarmIsTest){stopAlarm();syncAlarm()}},15000);
 }
 function stopAlarm(){
  if(!alarmActive)return;
- alarmActive=false;alarmAttempt++;releaseAlarmSource();
+ alarmActive=false;alarmIsTest=false;alarmAttempt++;pauseAlarmPlayer();
  document.body.classList.remove('alarming');setAlarmPhase('idle');
 }
 function clearSnooze(){
@@ -1246,13 +1341,13 @@ function clearSnooze(){
 }
 function syncAlarm(now=new Date()){
  clearTimeout(alarmTimer);
- if(!state.soundAlarm||document.visibilityState!=='visible'||alarmActive)return;
- if(alarmSchedule.snooze&&alarmSchedule.snooze<=now){
+ if(document.visibilityState!=='visible'||alarmActive)return;
+ if(state.soundAlarm&&alarmSchedule.snooze&&alarmSchedule.snooze<=now){
   const late=now-alarmSchedule.snooze;
   clearSnooze();
   if(late<ALARM_RECOVERY_MS){startAlarm();return}
  }
- if(!alarmSchedule.snooze){
+ if(state.soundAlarm&&!alarmSchedule.snooze){
   // The previous day can still be due just after midnight.
   const today=dailyAlarm(now);
   const due=today?.target>now?dailyAlarm(now,-1):today;
@@ -1260,8 +1355,14 @@ function syncAlarm(now=new Date()){
    alarmSchedule.last=due.key;saveAlarmSchedule();startAlarm();return;
   }
  }
- const next=nextAlarm(now);
- if(next)alarmTimer=setTimeout(syncAlarm,Math.max(0,next-Date.now()));
+ if(alarmTestAt&&alarmTestAt<=now){
+   if(now-alarmTestAt<ALARM_RECOVERY_MS){startAlarm(true);return}
+   alarmTestAt=0;updateAlarmTestButton();
+   $('audioTestStatus').textContent='Test expiré. Garde NightDial visible pendant le prochain essai.';
+ }
+ const next=state.soundAlarm?nextAlarm(now):null;
+ const deadline=Math.min(next?.getTime()??Infinity,alarmTestAt||Infinity);
+ if(Number.isFinite(deadline))alarmTimer=setTimeout(syncAlarm,Math.max(0,deadline-Date.now()));
 }
 $('stopAlarm').addEventListener('click',()=>{stopAlarm();syncAlarm();toast('Alarme arrêtée')});
 $('snoozeAlarm').addEventListener('click',()=>{
@@ -1291,7 +1392,7 @@ function resumeNightDial(){
 }
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState==='visible')resumeNightDial();
- else{document.body.classList.remove('shooting-stars');stopLoop();clearTimeout(alarmTimer);stopAlarm();syncTheta()}
+ else{document.body.classList.remove('shooting-stars');stopLoop();clearTimeout(alarmTimer);syncTheta()}
 });
 window.addEventListener('pageshow',resumeNightDial);
 document.addEventListener('pointerdown',()=>{if(state.wake&&(!wakeLock||wakeLock.released))manageWake()},{passive:true});

@@ -2,6 +2,13 @@
 
 Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript sans compte Apple Developer.
 
+## v32 — Dérive thêta et réveil
+
+- En mode nuit, **Écouter Dérive thêta** lance le [MP3 de 10 minutes](NightDial_Derive_10min.mp3) depuis le cadran. La piste tourne en boucle jusqu’à la fin de la minuterie, la sortie du mode nuit ou le déclenchement du réveil. Choisis **10 minutes** dans **Réglages → Nuit** pour une seule écoute. La piste devient disponible hors ligne après sa mise en cache lors d’une lecture en ligne.
+- Balaye le cadran à gauche ou à droite pour passer entre analogique, numérique et Flip gare. En mode nuit ou pendant la routine, le choix s’applique à la session en cours.
+- Après avoir ouvert NightDial, va dans **Réglages → Réveil → Écouter et préparer la sonnerie**. L’aperçu prépare le même lecteur et la même source audio que ceux du réveil programmé. **Tester le réveil dans 15 s** joue l’aperçu, puis déclenche un test différé sans modifier l’heure enregistrée.
+- Garde NightDial visible et l’écran éveillé. Si le navigateur bloque ou interrompt la sonnerie, touche **Faire sonner**. Pour un réveil avec l’écran verrouillé, règle une alarme dans **Horloge** ou demande à Siri.
+
 ## v29 — Heure de réveil unifiée
 
 - Une seule heure pour l’alarme sonore, le réveil visuel, le compte à rebours et la routine. Elle se règle depuis **Réglages → Réveil** ou **Nuit → Routine du soir**.
@@ -31,7 +38,7 @@ Horloge nocturne pour iPhone 16e et autres appareils iOS, en HTML/CSS/JavaScript
 - Dans **Réglages → Réveil**, choisissez une des trois sonneries et touchez **Écouter et préparer la sonnerie**. Laissez NightDial visible et l’écran éveillé. Le retour au premier plan dans les deux minutes qui suivent l’heure prévue peut déclencher un réveil manqué. NightDial indique si le navigateur refuse la lecture. Utilisez l’application Horloge d’iOS pour les réveils importants.
 - Le Service Worker utilise le cache `nightdial-premium-v26`. Les préférences sous `nightdial-v1` sont conservées. La v26 ne modifie pas le fichier local éventuellement importé dans la v25.
 
-**Droits audio.** [Dérive thêta 428 Hz](derive-theta-428hz.mp3) est une création originale du propriétaire de NightDial, publiée avec son autorisation. Tous droits réservés sur le morceau. La licence Apache 2.0 du code ne s’applique pas à ce fichier audio.
+**Droits audio.** La licence Apache 2.0 couvre le code. Les morceaux Dérive thêta sont fournis par le propriétaire de NightDial. Tous droits réservés sur ces morceaux.
 
 **Validation sur appareil.** Vérifier le réveil programmé sans interaction à l’heure prévue, le report, la lecture de Theta Sleep et la reprise hors ligne après mise à jour. Faire ces essais dans Safari et depuis l’écran d’accueil, puis consigner le modèle et la version d’iOS.
 
