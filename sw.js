@@ -1,4 +1,4 @@
-const CACHE = 'nightdial-premium-v32';
+const CACHE = 'nightdial-premium-v33';
 const THETA_CACHE = 'nightdial-theta-v2';
 const scope = new URL(self.registration.scope);
 const index = new URL('index.html', scope);
@@ -86,7 +86,7 @@ async function serveTrack(request, url) {
 
 async function serveNavigation(request) {
   try {
-    const response = await fetch(request);
+    const response = await fetch(request, {cache: 'no-cache'});
     if (response.status < 500) return response;
   } catch {
     // Fall back to the app shell for offline launches and reloads.
